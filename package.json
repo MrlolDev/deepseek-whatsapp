@@ -3,8 +3,9 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx watch src/index.ts"
+    "build": "tsc ",
+    "dev": "tsx watch src/index.ts",
+    "clean": "rm -rf dist"
   },
   "devDependencies": {
     "@types/bun": "latest",

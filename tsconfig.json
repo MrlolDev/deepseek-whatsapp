@@ -10,9 +10,12 @@
 
     // Bundler mode
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
-    "noEmit": true,
+
+    // Change noEmit to false and add outDir
+    "noEmit": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
 
     // Best practices
     "strict": true,
@@ -23,5 +26,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
