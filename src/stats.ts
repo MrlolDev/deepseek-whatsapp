@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { getCountryCodeFromPhone } from "./utils";
+import { getCountryCodeFromPhone } from "./utils.js";
 
 interface CountryStats {
   messages: number;
