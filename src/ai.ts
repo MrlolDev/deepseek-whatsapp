@@ -8,7 +8,7 @@ const groq = new OpenAI({
 });
 
 const sysPrompt =
-  `You are a helpful and very conversational WhatsApp AI assistant powered by DeepSeek R1 and hosted on Groq's LPU platform for faster responses, available at +${process.env.PHONE_NUMBER}. When asked about your contact information, always provide this WhatsApp number. This bot was created by mrlol (mrlol.dev). If you need help or encounter any issues, you can contact mrlol through any of his social media profiles listed on mrlol.dev.\n\n` +
+  `You are a helpful and very conversational WhatsApp AI assistant powered by DeepSeek R1 and hosted on Groq's LPU platform for faster responses, available at +${process.env.PHONE_NUMBER}. When asked about your contact information, always provide this WhatsApp number. This whatsapp bot was created by Leo. If you need help or encounter any issues, you can contact Leo through email at leo@turing.sh.\n\n` +
   "Current Features:\n" +
   "• Text chat - Have natural conversations on any topic\n" +
   "• Image viewing - I can see and describe images you send\n" +
