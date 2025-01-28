@@ -76,7 +76,7 @@ export function updateStats(
   if (messageType === "audio") stats.totalAudios++;
   if (messageType === "image") stats.totalImages++;
 
-  const country = getCountryCodeFromPhone(countryCode) || "unknown";
+  const country = getCountryCodeFromPhone(countryCode) || countryCode;
   // Initialize country stats if not exists
   if (!stats.byCountry[country]) {
     stats.byCountry[country] = {
