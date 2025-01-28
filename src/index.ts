@@ -141,4 +141,40 @@ client.on("message", async (message) => {
   }
 });
 
+client.on("incoming_call", async (call) => {
+  try {
+    // Reject the call
+    await call.reject();
+
+    // Send a message to the caller
+    const chat = await call.from.split("@")[0];
+    await client.sendMessage(
+      call.from,
+      "Sorry, I cannot receive calls. However, I can respond to voice messages! Feel free to send me a voice note instead."
+    );
+  } catch (error) {
+    console.error("Error handling call:", error);
+  }
+});
+
+/*
+client.on("group_join", async (notification) => {
+  // Check if the bot itself was added to the group
+  const botNumber = client.info.wid._serialized;
+  const addedParticipants = notification.recipientIds;
+
+  if (!addedParticipants.includes(botNumber)) {
+    return;
+  }
+
+  try {
+    const chat = await notification.getChat();
+    await chat.sendMessage(
+      "👋 Hello! I'm an AI assistant. In group chats, you'll need to tag/mention me to get my attention. Looking forward to chatting with you!"
+    );
+  } catch (error) {
+    console.error("Error sending welcome message:", error);
+  }
+});
+*/
 client.initialize();
