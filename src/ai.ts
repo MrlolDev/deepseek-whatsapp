@@ -55,9 +55,15 @@ export async function chat(
     const answer = fullAnswer.split("</think>")[1]?.trim() ?? "";
     return { answer, thinking };
   } catch (error) {
+    const models = [
+      "llama-3.3-70b-versatile",
+      "llama-3.3-70b-specdec",
+      "llama-3.2-90b-vision-preview",
+    ];
+    const randomModel = models[Math.floor(Math.random() * models.length)];
     // If we hit rate limit, retry with llama-3.2-90b-vision-preview
     const fallbackResponse = await groq.chat.completions.create({
-      model: "llama-3.2-90b-vision-preview",
+      model: randomModel,
       messages: [
         {
           role: "system",
