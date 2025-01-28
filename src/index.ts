@@ -49,7 +49,6 @@ client.on("message", async (message) => {
       // Handle voice messages
       if (message.type == "ptt") {
         userInput = await transcribeAudio(Buffer.from(media.data, "base64"));
-        console.log("Voice message:", userInput);
       }
     }
     // Handle text messages
@@ -129,9 +128,7 @@ client.on("message", async (message) => {
     }
 
     // Get AI response
-    console.log(messages);
     const response = await chat(messages);
-    console.log(response);
 
     // Send the response
     await message.reply(response.answer);
