@@ -39,7 +39,6 @@ client.on("message", async (message) => {
 
   try {
     let userInput = "";
-    let imageContent = null;
 
     // Handle different message types
     let media = null;
@@ -55,9 +54,8 @@ client.on("message", async (message) => {
     if (message.type === "chat") {
       userInput = message.body;
     }
-
     // If no valid content, ignore the message
-    if (!userInput && !imageContent) {
+    if (!userInput) {
       return;
     }
 
