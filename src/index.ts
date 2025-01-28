@@ -34,7 +34,9 @@ client.on("message", async (message) => {
   const mentions = await message.getMentions();
   const isGroup = message.from.includes("@g.us");
   const mentionsMe = mentions.some((mention) => mention.isMe);
-  if (isGroup && !mentionsMe) {
+  const quotedMessage = await message.getQuotedMessage();
+  const isReplyToMe = quotedMessage?.fromMe;
+  if (isGroup && !mentionsMe && !isReplyToMe) {
     return;
   }
 
