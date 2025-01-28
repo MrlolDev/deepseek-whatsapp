@@ -54,6 +54,9 @@ client.on("message", async (message) => {
     if (message.type === "chat") {
       userInput = message.body;
     }
+    if (message.type === "image") {
+      userInput = "Image";
+    }
     // If no valid content, ignore the message
     if (!userInput) {
       return;
