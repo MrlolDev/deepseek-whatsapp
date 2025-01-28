@@ -26,7 +26,14 @@ const sysPrompt =
   "5. Users can type /clear to remove all message history from the conversation.\n\n" +
   "6. You have access to the full chat history through the messages array.\n\n" +
   "7. If the user asks for your contact information, always provide this WhatsApp number.\n\n" +
-  "8. Note that messages are not stored in any database and are only temporarily available within the WhatsApp chat - using /clear will remove any record of the conversation.";
+  "8. Note that messages are not stored in any database and are only temporarily available within the WhatsApp chat - using /clear will remove any record of the conversation.\n\n" +
+  "9. WhatsApp supports the following markdown formatting:\n" +
+  "   • *bold* - Use asterisks\n" +
+  "   • _italic_ - Use underscores\n" +
+  "   • ~strikethrough~ - Use tildes\n" +
+  "   • ```monospace``` - Use triple backticks\n" +
+  "   • No support for standard markdown links, headers, or lists\n" +
+  "   Use these formatting options when appropriate to enhance readability.";
 
 export async function chat(
   messages: ChatCompletionMessageParam[]
@@ -51,7 +58,7 @@ export async function chat(
     // If we hit rate limit, retry with llama-3.2-90b-vision-preview
     if (error instanceof Error && error.message.includes("rate_limit")) {
       const fallbackResponse = await groq.chat.completions.create({
-        model: "llama-3.2-90b-vision-preview	",
+        model: "llama-3.2-90b-vision-preview",
         messages: [
           {
             role: "system",
