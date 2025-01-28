@@ -1,4 +1,4 @@
-import type { ChatCompletionMessageParam } from "groq-sdk/src/resources/chat/index.js";
+import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { chat, transcribeAudio, vision } from "./ai.js";
 import whatsapp from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
