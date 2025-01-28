@@ -4,6 +4,7 @@ import whatsapp from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
 import puppeteer from "puppeteer";
 import "dotenv/config";
+import { updateStats } from "./stats.js";
 
 const client = new whatsapp.Client({
   authStrategy: new whatsapp.LocalAuth(),
@@ -39,6 +40,8 @@ client.on("message", async (message) => {
 
   try {
     let userInput = "";
+    // Get country code from the sender's number
+    const countryCode = message.from.split("@")[0].slice(0, 2);
 
     // Handle different message types
     let media = null;
@@ -48,14 +51,17 @@ client.on("message", async (message) => {
       // Handle voice messages
       if (message.type == "ptt") {
         userInput = await transcribeAudio(Buffer.from(media.data, "base64"));
+        updateStats(countryCode, "audio");
       }
     }
     // Handle text messages
     if (message.type === "chat") {
       userInput = message.body;
+      updateStats(countryCode, "message");
     }
     if (message.type === "image") {
       userInput = "Image";
+      updateStats(countryCode, "image");
     }
     // If no valid content, ignore the message
     if (!userInput) {
