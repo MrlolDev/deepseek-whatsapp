@@ -56,22 +56,19 @@ export async function chat(
     return { answer, thinking };
   } catch (error) {
     // If we hit rate limit, retry with llama-3.2-90b-vision-preview
-    if (error instanceof Error && error.message.includes("rate_limit")) {
-      const fallbackResponse = await groq.chat.completions.create({
-        model: "llama-3.2-90b-vision-preview",
-        messages: [
-          {
-            role: "system",
-            content: sysPrompt,
-          },
-          ...messages,
-        ],
-        max_tokens: 2048,
-      });
-      const fullAnswer = fallbackResponse.choices[0].message.content ?? "";
-      return { answer: fullAnswer };
-    }
-    throw error;
+    const fallbackResponse = await groq.chat.completions.create({
+      model: "llama-3.2-90b-vision-preview",
+      messages: [
+        {
+          role: "system",
+          content: sysPrompt,
+        },
+        ...messages,
+      ],
+      max_tokens: 2048,
+    });
+    const fullAnswer = fallbackResponse.choices[0].message.content ?? "";
+    return { answer: fullAnswer };
   }
 }
 
