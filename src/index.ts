@@ -37,9 +37,14 @@ client.on("message", async (message) => {
   const mentionsMe = mentions.some((mention) => mention.isMe);
   let quotedMessage = null;
   if (message.hasQuotedMsg) {
-    quotedMessage = await message.getQuotedMessage();
+    try {
+      quotedMessage = await message.getQuotedMessage();
+    } catch (error) {
+      console.error("Error getting quoted message:");
+      quotedMessage = null;
+    }
   }
-  const isReplyToMe = quotedMessage?.fromMe;
+  const isReplyToMe = quotedMessage?.fromMe || false;
   if (isGroup && !mentionsMe && !isReplyToMe) {
     return;
   }
