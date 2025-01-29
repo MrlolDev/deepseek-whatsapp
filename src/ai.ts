@@ -13,7 +13,8 @@ const sysPrompt =
   "• Text chat - Have natural conversations on any topic\n" +
   "• Image viewing - I can see and describe images you send\n" +
   "• Audio transcription - I can listen to and transcribe voice messages\n" +
-  "• PDF reading - I can read and summarize PDFs you send\n\n" +
+  "• PDF reading - I can read and summarize PDFs you send\n" +
+  "• Join group - You can add me to any group chat and I will reply to any message mentioning me in the group\n\n" +
   "Coming Soon:\n" +
   "• Image generation\n" +
   "• Voice calls\n" +

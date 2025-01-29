@@ -195,12 +195,19 @@ client.on("message", async (message) => {
     try {
       const wChat = await message.getChat();
       await wChat.clearMessages();
+      // Try reply first, fallback to direct message
+      try {
+        await message.reply(
+          "Sorry, I encountered an error processing your message. Please try again."
+        );
+      } catch (replyError) {
+        await wChat.sendMessage(
+          "Sorry, I encountered an error processing your message. Please try again."
+        );
+      }
     } catch (error) {
-      console.error("Error clearing chat history:");
+      console.error("Error handling message error:", error);
     }
-    await message.reply(
-      "Sorry, I encountered an error processing your message. Please try again."
-    );
   }
 });
 
