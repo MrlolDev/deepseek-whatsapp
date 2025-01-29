@@ -1,4 +1,4 @@
-import { getDocument } from "pdfjs-dist";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 
 /**
  * Maps country calling codes to ISO country codes
@@ -51,6 +51,9 @@ const COUNTRY_CALLING_CODES: { [key: string]: string } = {
   "98": "IR", // Iran
 };
 
+// Set worker path to null to avoid worker-related issues
+GlobalWorkerOptions.workerSrc = "";
+
 /**
  * Gets the ISO country code from a phone number.
  * @param phoneNumber The phone number (e.g., +34253521)
@@ -83,11 +86,12 @@ export function getCountryCodeFromPhone(phoneNumber: string): string | null {
 }
 
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
-  // Create a new loading task with explicit version to avoid compatibility issues
   const loadingTask = getDocument({
     data: pdfBuffer,
-    useWorkerFetch: false,
-    isEvalSupported: false,
+    useSystemFonts: true,
+    standardFontDataUrl: `node_modules/pdfjs-dist/standard_fonts/`,
+    cMapUrl: `node_modules/pdfjs-dist/cmaps/`,
+    cMapPacked: true,
   });
 
   try {
@@ -111,7 +115,6 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
     console.error("Error processing PDF:", error);
     throw error;
   } finally {
-    // Clean up by destroying the loading task
     loadingTask.destroy();
   }
 }
