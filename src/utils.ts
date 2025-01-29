@@ -86,8 +86,13 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
   const loadingTask = getDocument({ data: pdfBuffer });
   const pdf = await loadingTask.promise;
   let text = "";
+  if (pdf.numPages === 0) {
+    return "No pages found in the PDF.";
+  }
 
-  for (let i = 1; i <= pdf.numPages; i++) {
+  // Limit to first 5 pages
+  const pagesToRead = Math.min(5, pdf.numPages);
+  for (let i = 1; i <= pagesToRead; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     text += content.items.map((item: any) => item.str).join(" ") + "\n";
