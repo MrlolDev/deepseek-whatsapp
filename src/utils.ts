@@ -1,5 +1,5 @@
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
-
+import pkg from "pdfjs-dist";
+const { getDocument, GlobalWorkerOptions } = pkg;
 /**
  * Maps country calling codes to ISO country codes
  */
