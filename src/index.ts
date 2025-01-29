@@ -5,6 +5,7 @@ import qrcode from "qrcode-terminal";
 import puppeteer from "puppeteer";
 import "dotenv/config";
 import { updateStats } from "./stats.js";
+import pdfParse from "pdf-parse";
 
 const client = new whatsapp.Client({
   authStrategy: new whatsapp.LocalAuth(),
@@ -58,18 +59,32 @@ client.on("message", async (message) => {
         userInput = await transcribeAudio(Buffer.from(media.data, "base64"));
         updateStats(countryCode, "audio");
       }
+
+      if (message.type === "image") {
+        userInput = "Image";
+        updateStats(countryCode, "image");
+      }
+      if (message.type == "audio") {
+        userInput = await transcribeAudio(Buffer.from(media.data, "base64"));
+        updateStats(countryCode, "audio");
+      }
     }
+
     // Handle text messages
     if (message.type === "chat") {
       userInput = message.body;
       updateStats(countryCode, "message");
     }
-    if (message.type === "image") {
-      userInput = "Image";
-      updateStats(countryCode, "image");
+
+    if (message.type == "sticker") {
+      userInput = "Sticker";
+      updateStats(countryCode, "sticker");
     }
     // If no valid content, ignore the message
     if (!userInput) {
+      await message.reply(
+        "Please send a valid message. I do not support this type of message."
+      );
       return;
     }
 
@@ -95,7 +110,7 @@ client.on("message", async (message) => {
         const media = await msg.downloadMedia();
 
         // Handle voice messages in history
-        if (msg.type == "ptt") {
+        if (msg.type == "ptt" || msg.type == "audio") {
           const transcription = await transcribeAudio(
             Buffer.from(media.data, "base64")
           );
@@ -107,7 +122,33 @@ client.on("message", async (message) => {
             role: "user",
             content,
           });
+        } else if (msg.type == "sticker") {
+          const stickerDescription = await vision(media.data);
+          let content = msg.body
+            ? `[Sticker description: ${stickerDescription}] ${msg.body}`
+            : `[Sticker description: ${stickerDescription}]`;
+          if (isGroup && !msg.fromMe) {
+            content = `[${msg.author}] ${content}`;
+          }
+          messages.push({
+            role: msg.fromMe ? "assistant" : "user",
+            content,
+          });
+        } else if (msg.type == "document") {
+          if (media.mimetype === "application/pdf") {
+            const pdfBuffer = Buffer.from(media.data, "base64");
+            const pdfData = await pdfParse(pdfBuffer);
+            let content = `[Attached PDF]: ${pdfData.text}`;
+            if (isGroup && !msg.fromMe) {
+              content = `[${msg.author}] ${content}`;
+            }
+            messages.push({
+              role: msg.fromMe ? "assistant" : "user",
+              content,
+            });
+          }
         }
+
         // Handle images in history
         else if (msg.type === "image") {
           // Convert the base64 image to a data URL

@@ -11,12 +11,14 @@ interface CountryStats {
   messages: number;
   audios: number;
   images: number;
+  stickers: number;
 }
 
 interface Stats {
   totalMessages: number;
   totalAudios: number;
   totalImages: number;
+  totalStickers: number;
   byCountry: {
     [countryCode: string]: CountryStats;
   };
@@ -29,6 +31,7 @@ const defaultStats: Stats = {
   totalMessages: 0,
   totalAudios: 0,
   totalImages: 0,
+  totalStickers: 0,
   byCountry: {},
 };
 
@@ -67,7 +70,7 @@ function saveStats(stats: Stats) {
 // Update stats
 export function updateStats(
   countryCode: string,
-  messageType: "message" | "audio" | "image"
+  messageType: "message" | "audio" | "image" | "sticker"
 ) {
   const stats = loadStats();
 
@@ -75,6 +78,7 @@ export function updateStats(
   if (messageType === "message") stats.totalMessages++;
   if (messageType === "audio") stats.totalAudios++;
   if (messageType === "image") stats.totalImages++;
+  if (messageType === "sticker") stats.totalStickers++;
 
   const country = getCountryCodeFromPhone(countryCode) || countryCode;
   // Initialize country stats if not exists
@@ -83,6 +87,7 @@ export function updateStats(
       messages: 0,
       audios: 0,
       images: 0,
+      stickers: 0,
     };
   }
 
@@ -90,6 +95,7 @@ export function updateStats(
   if (messageType === "message") stats.byCountry[country].messages++;
   if (messageType === "audio") stats.byCountry[country].audios++;
   if (messageType === "image") stats.byCountry[country].images++;
+  if (messageType === "sticker") stats.byCountry[country].stickers++;
 
   saveStats(stats);
 }
