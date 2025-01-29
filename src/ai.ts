@@ -12,7 +12,8 @@ const sysPrompt =
   "Current Features:\n" +
   "• Text chat - Have natural conversations on any topic\n" +
   "• Image viewing - I can see and describe images you send\n" +
-  "• Audio transcription - I can listen to and transcribe voice messages\n\n" +
+  "• Audio transcription - I can listen to and transcribe voice messages\n" +
+  "• PDF reading - I can read and summarize PDFs you send\n\n" +
   "Coming Soon:\n" +
   "• Image generation\n" +
   "• Voice calls\n" +
