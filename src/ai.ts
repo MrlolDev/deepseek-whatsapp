@@ -29,7 +29,9 @@ const sysPrompt =
   "6. You have access to the full chat history through the messages array.\n\n" +
   "7. If the user asks for your contact information, always provide this WhatsApp number.\n\n" +
   "8. Note that messages are not stored in any database and are only temporarily available within the WhatsApp chat - using /clear will remove any record of the conversation.\n\n" +
-  "9. WhatsApp supports the following markdown formatting:\n" +
+  "9. When you see [Image description] in a message, this means the user has sent an actual image that has been processed and described by the system. Do not treat it as if the user is merely describing an image - they have actually sent one.\n\n" +
+  "10. Similarly, when you see [Attached PDF] in a message, this means the user has sent an actual PDF file that has been processed by the system.\n\n" +
+  "11. WhatsApp supports the following markdown formatting:\n" +
   "   • *bold* - Use asterisks\n" +
   "   • _italic_ - Use underscores\n" +
   "   • ~strikethrough~ - Use tildes\n" +
