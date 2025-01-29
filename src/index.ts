@@ -95,6 +95,7 @@ client.on("message", async (message) => {
 
     // Get chat history
     const wChat = await message.getChat();
+    await wChat.sendSeen();
     if (userInput.startsWith("/clear")) {
       await wChat.sendStateTyping();
       await wChat.clearMessages();
@@ -196,8 +197,10 @@ client.on("message", async (message) => {
     await message.reply(response.answer);
   } catch (error) {
     console.error("Error processing message:", error);
+    const wChat = await message.getChat();
+    await wChat.clearMessages();
     await message.reply(
-      "Sorry, I encountered an error processing your message."
+      "Sorry, I encountered an error processing your message. Please try again."
     );
   }
 });
