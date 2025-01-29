@@ -1,3 +1,5 @@
+import { getDocument } from "pdfjs-dist";
+
 /**
  * Maps country calling codes to ISO country codes
  */
@@ -78,4 +80,18 @@ export function getCountryCodeFromPhone(phoneNumber: string): string | null {
   }
 
   return null;
+}
+
+export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
+  const loadingTask = getDocument({ data: pdfBuffer });
+  const pdf = await loadingTask.promise;
+  let text = "";
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map((item: any) => item.str).join(" ") + "\n";
+  }
+
+  return text;
 }

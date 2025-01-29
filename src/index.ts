@@ -5,6 +5,7 @@ import qrcode from "qrcode-terminal";
 import puppeteer from "puppeteer";
 import "dotenv/config";
 import { updateStats } from "./stats.js";
+import { extractTextFromPDF } from "./utils.js";
 
 const client = new whatsapp.Client({
   authStrategy: new whatsapp.LocalAuth(),
@@ -134,6 +135,19 @@ client.on("message", async (message) => {
             content,
           });
         } else if (msg.type == "document") {
+          if (media.mimetype === "application/pdf") {
+            const pdfData = await extractTextFromPDF(
+              Buffer.from(media.data, "base64")
+            );
+            let content = `[Attached PDF]: ${pdfData}`;
+            if (isGroup && !msg.fromMe) {
+              content = `[${msg.author}] ${content}`;
+            }
+            messages.push({
+              role: msg.fromMe ? "assistant" : "user",
+              content,
+            });
+          }
         }
 
         // Handle images in history
