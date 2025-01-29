@@ -139,7 +139,9 @@ client.on("message", async (message) => {
             const pdfData = await extractTextFromPDF(
               Buffer.from(media.data, "base64")
             );
-            let content = `[Attached PDF]: ${pdfData}`;
+            let content = msg.body
+              ? `[Attached PDF: ${pdfData}] ${msg.body}`
+              : `[Attached PDF: ${pdfData}]`;
             if (isGroup && !msg.fromMe) {
               content = `[${msg.author}] ${content}`;
             }
