@@ -12,6 +12,7 @@ A WhatsApp bot powered by Deepseek AI that helps you chat, answer questions, and
 - Natural language conversations
 - Image recognition - Send images and get descriptions
 - Voice message transcription - Send voice messages and get text transcriptions
+- PDF reading - Send PDFs and get text extractions
 - Available 24/7
 - Markdown formatting support for better readability
 

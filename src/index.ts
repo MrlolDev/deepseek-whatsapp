@@ -80,6 +80,11 @@ client.on("message", async (message) => {
       userInput = "Sticker";
       updateStats(countryCode, "sticker");
     }
+
+    if (message.type == "document") {
+      userInput = "Document";
+      updateStats(countryCode, "document");
+    }
     // If no valid content, ignore the message
     if (!userInput) {
       await message.reply(
