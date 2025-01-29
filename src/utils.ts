@@ -51,7 +51,7 @@ const COUNTRY_CALLING_CODES: { [key: string]: string } = {
   "98": "IR", // Iran
 };
 
-// Set worker path to null to avoid worker-related issues
+// Configure the worker
 GlobalWorkerOptions.workerSrc = "";
 
 /**
@@ -88,10 +88,9 @@ export function getCountryCodeFromPhone(phoneNumber: string): string | null {
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
   const loadingTask = getDocument({
     data: pdfBuffer,
-    useSystemFonts: true,
-    standardFontDataUrl: `node_modules/pdfjs-dist/standard_fonts/`,
-    cMapUrl: `node_modules/pdfjs-dist/cmaps/`,
-    cMapPacked: true,
+    verbosity: 0,
+    useSystemFonts: false,
+    disableFontFace: true,
   });
 
   try {
