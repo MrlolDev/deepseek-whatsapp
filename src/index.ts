@@ -111,6 +111,10 @@ client.on("message", async (message) => {
     // Format messages for the AI
     let messages: ChatCompletionMessageParam[] = [];
     for (const msg of history) {
+      if (msg.body.startsWith("/clear")) {
+        messages = []; // remove all the previous messages
+        continue;
+      }
       if (msg.hasMedia) {
         const media = await msg.downloadMedia();
 
@@ -175,9 +179,6 @@ client.on("message", async (message) => {
         }
       } else {
         let content = msg.body;
-        if (content.startsWith("/clear")) {
-          messages = []; // remove all the previous messages
-        }
         if (isGroup && !msg.fromMe) {
           content = `[${msg.author}] ${content}`;
         }

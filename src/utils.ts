@@ -86,8 +86,10 @@ export function getCountryCodeFromPhone(phoneNumber: string): string | null {
 }
 
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
+  const uint8Array = new Uint8Array(pdfBuffer); // Convert Buffer to Uint8Array
+
   const loadingTask = getDocument({
-    data: pdfBuffer,
+    data: uint8Array,
     verbosity: 0,
     useSystemFonts: false,
     disableFontFace: true,
