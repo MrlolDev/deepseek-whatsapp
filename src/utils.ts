@@ -83,20 +83,35 @@ export function getCountryCodeFromPhone(phoneNumber: string): string | null {
 }
 
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
-  const loadingTask = getDocument({ data: pdfBuffer });
-  const pdf = await loadingTask.promise;
-  let text = "";
-  if (pdf.numPages === 0) {
-    return "No pages found in the PDF.";
-  }
+  // Create a new loading task with explicit version to avoid compatibility issues
+  const loadingTask = getDocument({
+    data: pdfBuffer,
+    useWorkerFetch: false,
+    isEvalSupported: false,
+  });
 
-  // Limit to first 5 pages
-  const pagesToRead = Math.min(5, pdf.numPages);
-  for (let i = 1; i <= pagesToRead; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map((item: any) => item.str).join(" ") + "\n";
-  }
+  try {
+    const pdf = await loadingTask.promise;
+    let text = "";
 
-  return text;
+    if (pdf.numPages === 0) {
+      return "No pages found in the PDF.";
+    }
+
+    // Limit to first 5 pages
+    const pagesToRead = Math.min(5, pdf.numPages);
+    for (let i = 1; i <= pagesToRead; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map((item: any) => item.str).join(" ") + "\n";
+    }
+
+    return text;
+  } catch (error) {
+    console.error("Error processing PDF:", error);
+    throw error;
+  } finally {
+    // Clean up by destroying the loading task
+    loadingTask.destroy();
+  }
 }
