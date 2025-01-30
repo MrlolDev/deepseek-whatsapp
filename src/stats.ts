@@ -88,6 +88,22 @@ export function updateStats(
   const stats = loadStats();
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
 
+  // Initialize daily stats if not exists
+  if (!stats.byDate) {
+    stats.byDate = {};
+  }
+
+  if (!stats.byDate[today]) {
+    stats.byDate[today] = {
+      messages: 0,
+      audios: 0,
+      images: 0,
+      stickers: 0,
+      documents: 0,
+      byCountry: {},
+    };
+  }
+
   // Update total counts
   if (messageType === "message") stats.totalMessages++;
   if (messageType === "audio") stats.totalAudios++;
@@ -105,18 +121,6 @@ export function updateStats(
       images: 0,
       stickers: 0,
       documents: 0,
-    };
-  }
-
-  // Initialize daily stats if not exists
-  if (!stats.byDate[today]) {
-    stats.byDate[today] = {
-      messages: 0,
-      audios: 0,
-      images: 0,
-      stickers: 0,
-      documents: 0,
-      byCountry: {},
     };
   }
 
