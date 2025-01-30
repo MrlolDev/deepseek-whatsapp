@@ -1,8 +1,8 @@
 interface SearchResult {
   title: string;
   link: string;
-  snippet: string;
   description: string;
+  extra_snippets: string[];
   metaDescription?: string;
   keywords?: string[];
   mainContent?: string;
@@ -31,12 +31,26 @@ export async function webSearch(query: string): Promise<SearchResult[]> {
     }
 
     const data = await response.json();
-    return data.web.results.map((result: any) => ({
-      title: result.title,
-      link: result.url,
-      snippet: result.description,
-      description: result.description,
-    }));
+    const results = [];
+    for (const result of data.web.results) {
+      results.push({
+        title: result.title,
+        link: result.url,
+        description: result.description,
+        extra_snippets: result.extra_snippets,
+      });
+    }
+    if (data.query.is_news_breaking) {
+      for (const result of data.news.results) {
+        results.push({
+          title: result.title,
+          link: result.url,
+          description: result.description,
+          extra_snippets: [],
+        });
+      }
+    }
+    return results as SearchResult[];
   } catch (error) {
     console.error("Error performing web search:", error);
     throw new Error("Failed to perform web search");
