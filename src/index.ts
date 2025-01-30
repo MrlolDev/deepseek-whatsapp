@@ -23,6 +23,7 @@ const client = new whatsapp.Client({
 
 client.once("ready", async () => {
   console.log("Client is ready!");
+  client.sendPresenceAvailable();
 });
 
 client.on("qr", (qr) => {

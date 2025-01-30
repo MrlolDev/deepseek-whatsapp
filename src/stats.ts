@@ -15,6 +15,12 @@ interface CountryStats {
   documents: number;
 }
 
+interface DailyStats extends CountryStats {
+  byCountry: {
+    [countryCode: string]: CountryStats;
+  };
+}
+
 interface Stats {
   totalMessages: number;
   totalAudios: number;
@@ -23,6 +29,9 @@ interface Stats {
   totalDocuments: number;
   byCountry: {
     [countryCode: string]: CountryStats;
+  };
+  byDate: {
+    [date: string]: DailyStats;
   };
 }
 
@@ -36,6 +45,7 @@ const defaultStats: Stats = {
   totalStickers: 0,
   totalDocuments: 0,
   byCountry: {},
+  byDate: {},
 };
 
 // Ensure stats file exists
@@ -76,6 +86,7 @@ export function updateStats(
   messageType: "message" | "audio" | "image" | "sticker" | "document"
 ) {
   const stats = loadStats();
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
 
   // Update total counts
   if (messageType === "message") stats.totalMessages++;
@@ -85,6 +96,7 @@ export function updateStats(
   if (messageType === "document") stats.totalDocuments++;
 
   const country = getCountryCodeFromPhone(countryCode) || countryCode;
+
   // Initialize country stats if not exists
   if (!stats.byCountry[country]) {
     stats.byCountry[country] = {
@@ -96,12 +108,56 @@ export function updateStats(
     };
   }
 
+  // Initialize daily stats if not exists
+  if (!stats.byDate[today]) {
+    stats.byDate[today] = {
+      messages: 0,
+      audios: 0,
+      images: 0,
+      stickers: 0,
+      documents: 0,
+      byCountry: {},
+    };
+  }
+
+  // Initialize daily country stats if not exists
+  if (!stats.byDate[today].byCountry[country]) {
+    stats.byDate[today].byCountry[country] = {
+      messages: 0,
+      audios: 0,
+      images: 0,
+      stickers: 0,
+      documents: 0,
+    };
+  }
+
   // Update country-specific counts
-  if (messageType === "message") stats.byCountry[country].messages++;
-  if (messageType === "audio") stats.byCountry[country].audios++;
-  if (messageType === "image") stats.byCountry[country].images++;
-  if (messageType === "sticker") stats.byCountry[country].stickers++;
-  if (messageType === "document") stats.byCountry[country].documents++;
+  if (messageType === "message") {
+    stats.byCountry[country].messages++;
+    stats.byDate[today].messages++;
+    stats.byDate[today].byCountry[country].messages++;
+  }
+  if (messageType === "audio") {
+    stats.byCountry[country].audios++;
+    stats.byDate[today].audios++;
+    stats.byDate[today].byCountry[country].audios++;
+  }
+  if (messageType === "image") {
+    stats.byCountry[country].images++;
+    stats.byDate[today].images++;
+    stats.byDate[today].byCountry[country].images++;
+  }
+  if (messageType === "sticker") {
+    stats.byCountry[country].stickers++;
+    stats.byDate[today].stickers++;
+    stats.byDate[today].byCountry[country].stickers++;
+  }
+  if (messageType === "document") {
+    stats.byCountry[country].documents++;
+    stats.byDate[today].documents++;
+    stats.byDate[today].byCountry[country].documents++;
+  }
+
   saveStats(stats);
 }
 
