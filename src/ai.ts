@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import "dotenv/config";
 import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+import { webSearch } from "./tools";
 
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
@@ -58,8 +59,53 @@ export async function chat(
         ...messages,
       ],
       max_tokens: 2048,
+      tool_choice: "auto",
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "web_search",
+            description: "Search the web for information",
+            parameters: {
+              type: "object",
+              properties: {
+                query: {
+                  type: "string",
+                  description: "The query to search for",
+                },
+              },
+              required: ["query"],
+            },
+          },
+        },
+      ],
     });
-    const fullAnswer = response.choices[0].message.content ?? "";
+
+    const res = response.choices[0].message;
+
+    // Handle tool calls
+    if (res.tool_calls) {
+      const toolResults = await Promise.all(
+        res.tool_calls.map(async (toolCall) => {
+          if (toolCall.function.name === "web_search") {
+            const args = JSON.parse(toolCall.function.arguments);
+            const searchResults = await webSearch(args.query);
+            return {
+              tool_call_id: toolCall.id,
+              role: "tool" as const,
+              name: toolCall.function.name,
+              content: JSON.stringify(searchResults),
+            };
+          }
+          throw new Error(`Unknown tool: ${toolCall.function.name}`);
+        })
+      );
+
+      // Add the tool results to messages and make a follow-up call
+      return chat([...messages, res, ...toolResults]);
+    }
+
+    const fullAnswer = res.content ?? "";
     const thinking = fullAnswer.split("<think>")[1]?.split("</think>")[0] ?? "";
     const answer = fullAnswer.split("</think>")[1]?.trim() ?? "";
     return { answer, thinking };
