@@ -3,12 +3,14 @@ interface SearchResult {
   link: string;
   description: string;
   extra_snippets: string[];
-  metaDescription?: string;
-  keywords?: string[];
-  mainContent?: string;
+  news?: boolean;
+  web_result?: boolean;
 }
 
-export async function webSearch(query: string): Promise<SearchResult[]> {
+export async function webSearch(
+  query: string,
+  country: string = "US"
+): Promise<SearchResult[]> {
   try {
     const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
     if (!BRAVE_API_KEY) {
@@ -17,7 +19,7 @@ export async function webSearch(query: string): Promise<SearchResult[]> {
 
     const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(
       query
-    )}`;
+    )}&count=10&country=${country}`;
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -38,6 +40,7 @@ export async function webSearch(query: string): Promise<SearchResult[]> {
         link: result.url,
         description: result.description,
         extra_snippets: result.extra_snippets,
+        web_result: true,
       });
     }
     if (data.query.is_news_breaking) {
@@ -47,6 +50,7 @@ export async function webSearch(query: string): Promise<SearchResult[]> {
           link: result.url,
           description: result.description,
           extra_snippets: [],
+          news: true,
         });
       }
     }

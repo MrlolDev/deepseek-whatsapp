@@ -80,6 +80,11 @@ export async function chat(
                   description:
                     "An array of search queries to perform. Use multiple queries for better coverage of complex topics.",
                 },
+                country: {
+                  type: "string",
+                  description: "The country to search in.",
+                  default: "US",
+                },
               },
               required: ["queries"],
             },
@@ -98,7 +103,9 @@ export async function chat(
             const args = JSON.parse(toolCall.function.arguments);
             // Perform multiple searches and combine results
             const searchResults = await Promise.all(
-              args.queries.map((query: string) => webSearch(query))
+              args.queries.map((query: string) =>
+                webSearch(query, args.country || "US")
+              )
             );
             return {
               tool_call_id: toolCall.id,
