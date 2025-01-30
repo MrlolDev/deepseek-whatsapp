@@ -192,6 +192,14 @@ client.on("message", async (message) => {
 
     // Send the response
     await message.reply(response.answer);
+    if (response.imageBuffer) {
+      await message.reply(
+        new whatsapp.MessageMedia(
+          "image/png",
+          response.imageBuffer.toString("base64")
+        )
+      );
+    }
   } catch (error) {
     console.error("Error processing message:", error);
     try {

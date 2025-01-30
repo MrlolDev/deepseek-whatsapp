@@ -18,6 +18,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "canvas": "^3.1.0",
     "dotenv": "^16.4.7",
     "openai": "^4.80.1",
     "pdfjs-dist": "^3.11.174",

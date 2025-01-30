@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import "dotenv/config";
 import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
-import { webSearch } from "./tools.js";
+import { createTableImage, webSearch } from "./tools.js";
 
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
@@ -56,8 +56,9 @@ const sysPrompt =
   "   Use these formatting options when appropriate to enhance readability.";
 
 export async function chat(
-  messages: ChatCompletionMessageParam[]
-): Promise<{ answer: string; thinking?: string }> {
+  messages: ChatCompletionMessageParam[],
+  imageBuffer: Buffer | null = null
+): Promise<{ answer: string; thinking?: string; imageBuffer?: Buffer | null }> {
   try {
     const response = await groq.chat.completions.create({
       model: "deepseek-r1-distill-llama-70b",
@@ -98,6 +99,39 @@ export async function chat(
             },
           },
         },
+        {
+          type: "function",
+          function: {
+            name: "create_table",
+            description: "Create a table image from structured data",
+            parameters: {
+              type: "object",
+              properties: {
+                headers: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Array of column headers",
+                },
+                rows: {
+                  type: "array",
+                  items: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      description: "Cell content (will be converted to string)",
+                    },
+                  },
+                  description: "Array of rows, each containing cell values",
+                },
+                title: {
+                  type: "string",
+                  description: "Optional table title",
+                },
+              },
+              required: ["headers", "rows"],
+            },
+          },
+        },
       ],
     });
 
@@ -105,14 +139,13 @@ export async function chat(
 
     // Handle tool calls
     if (res.tool_calls) {
+      let imageBuffer: Buffer | null = null;
       const toolResults = await Promise.all(
         res.tool_calls.map(async (toolCall) => {
           if (toolCall.function.name === "web_search") {
             const args = JSON.parse(toolCall.function.arguments);
-            // Perform multiple searches and combine results
             const searchResults = await Promise.all(
               args.queries.map(async (query: string, index: number) => {
-                // Add delay for all searches after the first one
                 if (index > 0) {
                   await new Promise((resolve) => setTimeout(resolve, 1000));
                 }
@@ -125,23 +158,35 @@ export async function chat(
               name: toolCall.function.name,
               content: JSON.stringify(searchResults.flat()),
             };
+          } else if (toolCall.function.name === "create_table") {
+            const args = JSON.parse(toolCall.function.arguments);
+            imageBuffer = await createTableImage(args);
+            return {
+              tool_call_id: toolCall.id,
+              role: "tool" as const,
+              name: toolCall.function.name,
+              content: "Table image generated successfully",
+            };
           }
           throw new Error(`Unknown tool: ${toolCall.function.name}`);
         })
       );
       // Add the tool results to messages and make a follow-up call
-      return chat([
-        ...messages,
-        {
-          role: res.role,
-          tool_calls: res.tool_calls,
-        },
-        ...toolResults,
-      ]);
+      return chat(
+        [
+          ...messages,
+          {
+            role: res.role,
+            tool_calls: res.tool_calls,
+          },
+          ...toolResults,
+        ],
+        imageBuffer
+      );
     }
 
     const fullAnswer = res.content ?? "";
-    return { answer: fullAnswer };
+    return { answer: fullAnswer, imageBuffer };
   } catch (error) {
     const models = [
       "llama-3.3-70b-versatile",
@@ -162,7 +207,7 @@ export async function chat(
       max_tokens: 2048,
     });
     const fullAnswer = fallbackResponse.choices[0].message.content ?? "";
-    return { answer: fullAnswer };
+    return { answer: fullAnswer, imageBuffer };
   }
 }
 
