@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import "dotenv/config";
 import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
-import { webSearch } from "./tools";
+import { webSearch } from "./tools.js";
 
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
