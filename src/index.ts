@@ -191,14 +191,16 @@ client.on("message", async (message) => {
     const response = await chat(messages);
 
     // Send the response
-    await message.reply(response.answer);
     if (response.imageBuffer) {
-      await message.reply(
+      let msg = await message.reply(
         new whatsapp.MessageMedia(
           "image/png",
           response.imageBuffer.toString("base64")
         )
       );
+      await msg.reply(response.answer);
+    } else {
+      await message.reply(response.answer);
     }
   } catch (error) {
     console.error("Error processing message:", error);

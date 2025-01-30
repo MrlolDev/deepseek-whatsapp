@@ -56,9 +56,16 @@ const sysPrompt =
   "   • No support for standard markdown links, headers, or lists\n" +
   "   Use these formatting options when appropriate to enhance readability.\n\n" +
   "11. Table Generation:\n" +
-  "   • You can create formatted tables to display structured data\n" +
-  "   • When you use the create_table function, the table will be automatically attached as an image to your reply\n" +
-  "   • Do not include ASCII or text-based tables in your response - use the create_table function instead\n" +
+  "   • IMPORTANT: Always use the create_table function to generate tables - never use ASCII or text-based tables\n" +
+  "   • Whenever data needs to be presented in a tabular format, automatically use the create_table function\n" +
+  "   • The table will be automatically attached as an image to your message\n" +
+  "   • The create_table function handles all formatting - you only need to provide the data\n" +
+  "   • Examples of when to use tables:\n" +
+  "     - Comparing features or attributes\n" +
+  "     - Displaying numerical data\n" +
+  "     - Organizing information in rows and columns\n" +
+  "     - Showing pricing or specifications\n" +
+  "   • Never attempt to create tables using ASCII characters, markdown, or text formatting\n" +
   "   • The table image will be automatically added to your message, so you don't need to describe or format the table in your text response";
 
 export async function chat(

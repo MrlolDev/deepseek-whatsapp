@@ -72,17 +72,25 @@ export async function webSearch(
 export async function createTableImage(tableData: TableData): Promise<Buffer> {
   try {
     // Set up styling constants
-    const CELL_PADDING = 10;
+    const CELL_PADDING = 20;
     const HEADER_HEIGHT = 40;
     const ROW_HEIGHT = 35;
     const TITLE_HEIGHT = tableData.title ? 50 : 0;
+    const TABLE_MARGIN = 60;
+    const EXTRA_WIDTH_PADDING = 40;
 
     // Calculate dimensions
     const columnWidths = calculateColumnWidths(tableData);
     const tableWidth =
-      columnWidths.reduce((sum, width) => sum + width, 0) + CELL_PADDING * 2;
+      columnWidths.reduce((sum, width) => sum + width, 0) +
+      CELL_PADDING * 2 * tableData.headers.length +
+      TABLE_MARGIN * 2 +
+      EXTRA_WIDTH_PADDING;
     const tableHeight =
-      TITLE_HEIGHT + HEADER_HEIGHT + tableData.rows.length * ROW_HEIGHT;
+      TITLE_HEIGHT +
+      HEADER_HEIGHT +
+      tableData.rows.length * ROW_HEIGHT +
+      TABLE_MARGIN * 2;
 
     // Create canvas
     const canvas = createCanvas(tableWidth, tableHeight);
@@ -97,25 +105,36 @@ export async function createTableImage(tableData: TableData): Promise<Buffer> {
       ctx.fillStyle = "#333333";
       ctx.font = "bold 16px Arial";
       ctx.textAlign = "center";
-      ctx.fillText(tableData.title, tableWidth / 2, 30);
+      ctx.fillText(tableData.title, tableWidth / 2, TABLE_MARGIN + 30);
     }
 
     // Draw headers
     ctx.fillStyle = "#f3f4f6";
-    ctx.fillRect(0, TITLE_HEIGHT, tableWidth, HEADER_HEIGHT);
+    ctx.fillRect(
+      TABLE_MARGIN,
+      TABLE_MARGIN + TITLE_HEIGHT,
+      tableWidth - TABLE_MARGIN * 2,
+      HEADER_HEIGHT
+    );
     ctx.fillStyle = "#333333";
     ctx.font = "bold 14px Arial";
+    ctx.textAlign = "left";
 
-    let xOffset = CELL_PADDING;
+    let xOffset = TABLE_MARGIN + CELL_PADDING;
     tableData.headers.forEach((header, index) => {
-      ctx.fillText(header, xOffset, TITLE_HEIGHT + HEADER_HEIGHT / 2 + 5);
-      xOffset += columnWidths[index];
+      ctx.fillText(
+        header,
+        xOffset,
+        TABLE_MARGIN + TITLE_HEIGHT + HEADER_HEIGHT / 2 + 5
+      );
+      xOffset += columnWidths[index] + CELL_PADDING * 2;
     });
 
     // Draw rows
     ctx.font = "14px Arial";
     tableData.rows.forEach((row, rowIndex) => {
-      const y = TITLE_HEIGHT + HEADER_HEIGHT + rowIndex * ROW_HEIGHT;
+      const y =
+        TABLE_MARGIN + TITLE_HEIGHT + HEADER_HEIGHT + rowIndex * ROW_HEIGHT;
 
       // Alternate row background
       if (rowIndex % 2 === 0) {
@@ -123,14 +142,14 @@ export async function createTableImage(tableData: TableData): Promise<Buffer> {
       } else {
         ctx.fillStyle = "#f8f9fa";
       }
-      ctx.fillRect(0, y, tableWidth, ROW_HEIGHT);
+      ctx.fillRect(TABLE_MARGIN, y, tableWidth - TABLE_MARGIN * 2, ROW_HEIGHT);
 
       // Draw cell text
       ctx.fillStyle = "#333333";
-      let xOffset = CELL_PADDING;
+      let xOffset = TABLE_MARGIN + CELL_PADDING;
       row.forEach((cell, cellIndex) => {
         ctx.fillText(String(cell), xOffset, y + ROW_HEIGHT / 2 + 5);
-        xOffset += columnWidths[cellIndex];
+        xOffset += columnWidths[cellIndex] + CELL_PADDING * 2;
       });
     });
 
@@ -139,18 +158,18 @@ export async function createTableImage(tableData: TableData): Promise<Buffer> {
     ctx.beginPath();
 
     // Vertical lines
-    xOffset = 0;
+    xOffset = TABLE_MARGIN;
     tableData.headers.forEach((_, index) => {
-      xOffset += columnWidths[index];
-      ctx.moveTo(xOffset, TITLE_HEIGHT);
-      ctx.lineTo(xOffset, tableHeight);
+      xOffset += columnWidths[index] + CELL_PADDING * 2;
+      ctx.moveTo(xOffset, TABLE_MARGIN + TITLE_HEIGHT);
+      ctx.lineTo(xOffset, tableHeight - TABLE_MARGIN);
     });
 
     // Horizontal lines
     for (let i = 0; i <= tableData.rows.length; i++) {
-      const y = TITLE_HEIGHT + HEADER_HEIGHT + i * ROW_HEIGHT;
-      ctx.moveTo(0, y);
-      ctx.lineTo(tableWidth, y);
+      const y = TABLE_MARGIN + TITLE_HEIGHT + HEADER_HEIGHT + i * ROW_HEIGHT;
+      ctx.moveTo(TABLE_MARGIN, y);
+      ctx.lineTo(tableWidth - TABLE_MARGIN, y);
     }
 
     ctx.stroke();
@@ -167,7 +186,7 @@ function calculateColumnWidths(tableData: TableData): number[] {
 
   // Calculate based on headers
   tableData.headers.forEach((header, index) => {
-    columnWidths[index] = Math.max(columnWidths[index], header.length * 10);
+    columnWidths[index] = Math.max(columnWidths[index], header.length * 8);
   });
 
   // Calculate based on content
@@ -175,7 +194,7 @@ function calculateColumnWidths(tableData: TableData): number[] {
     row.forEach((cell, index) => {
       columnWidths[index] = Math.max(
         columnWidths[index],
-        String(cell).length * 10
+        String(cell).length * 8
       );
     });
   });
