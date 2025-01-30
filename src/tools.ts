@@ -1,3 +1,5 @@
+import { createCanvas } from "canvas";
+
 interface SearchResult {
   title: string;
   link: string;
@@ -69,8 +71,6 @@ export async function webSearch(
 
 export async function createTableImage(tableData: TableData): Promise<Buffer> {
   try {
-    const { createCanvas } = require("canvas");
-
     // Set up styling constants
     const CELL_PADDING = 10;
     const HEADER_HEIGHT = 40;

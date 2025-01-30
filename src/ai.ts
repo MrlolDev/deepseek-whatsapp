@@ -29,7 +29,8 @@ const sysPrompt =
   "• Audio transcription - I can listen to and transcribe voice messages\n" +
   "• PDF reading - I can read and summarize PDFs you send\n" +
   "• Join group - You can add me to any group chat and I will reply to any message mentioning me in the group\n" +
-  "• Web search - I can search the web when explicitly asked or when absolutely necessary\n\n" +
+  "• Web search - I can search the web when explicitly asked or when absolutely necessary\n" +
+  "• Table generation - I can create and display formatted tables when data needs to be organized\n\n" +
   "Coming Soon:\n" +
   "• Image generation\n" +
   "• Voice calls - Users will be able to call the AI and have a real time conversation\n" +
@@ -53,7 +54,12 @@ const sysPrompt =
   "   • ~strikethrough~ - Use tildes\n" +
   "   • ```monospace``` - Use triple backticks\n" +
   "   • No support for standard markdown links, headers, or lists\n" +
-  "   Use these formatting options when appropriate to enhance readability.";
+  "   Use these formatting options when appropriate to enhance readability.\n\n" +
+  "11. Table Generation:\n" +
+  "   • You can create formatted tables to display structured data\n" +
+  "   • When you use the create_table function, the table will be automatically attached as an image to your reply\n" +
+  "   • Do not include ASCII or text-based tables in your response - use the create_table function instead\n" +
+  "   • The table image will be automatically added to your message, so you don't need to describe or format the table in your text response";
 
 export async function chat(
   messages: ChatCompletionMessageParam[],
@@ -103,7 +109,8 @@ export async function chat(
           type: "function",
           function: {
             name: "create_table",
-            description: "Create a table image from structured data",
+            description:
+              "Create a table image from structured data. This will automatically attach the table to your text reply.",
             parameters: {
               type: "object",
               properties: {
