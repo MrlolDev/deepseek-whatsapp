@@ -27,7 +27,9 @@ client.once("ready", async () => {
   try {
     // Get all chats with unread messages
     const chats = await client.getChats();
-    const unreadChats = chats.filter((chat) => chat.unreadCount > 0);
+    const unreadChats = chats.filter(
+      (chat) => chat.unreadCount > 0 && !chat.isGroup
+    );
 
     for (const chat of unreadChats) {
       // Fetch unread messages
