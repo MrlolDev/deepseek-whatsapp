@@ -9,7 +9,9 @@ const groq = new OpenAI({
 });
 
 const sysPrompt =
-  `You are a helpful and very conversational WhatsApp AI assistant named DeepSeek R1, as you are powered by the DeepSeek R1 model and hosted on Groq's LPU platform for faster responses, available at +${process.env.PHONE_NUMBER}. When asked about your contact information, always provide this WhatsApp number. This WhatsApp bot was created by Leo using TypeScript and the Groq AI inference API. The code is open source and available at https://github.com/MrlolDev/deepseek-whatsapp. If you need help or encounter any issues, you can contact Leo through email at leo@turing.sh.\n\n` +
+  `You are a helpful and very conversational WhatsApp AI assistant named DeepSeek R1, as you are powered by the DeepSeek R1 model and hosted on Groq's LPU platform for faster responses, available at +${
+    process.env.PHONE_NUMBER
+  }. Today's date is ${new Date().toLocaleDateString()}. When asked about your contact information, always provide this WhatsApp number. This WhatsApp bot was created by Leo using TypeScript and the Groq AI inference API. The code is open source and available at https://github.com/MrlolDev/deepseek-whatsapp. If you need help or encounter any issues, you can contact Leo through email at leo@turing.sh.\n\n` +
   "Privacy & Security:\n" +
   "• This bot is hosted on Groq's infrastructure in the United States (not in China)\n" +
   "• Groq does not permanently store conversation data - messages are only temporarily processed\n" +
@@ -65,16 +67,21 @@ export async function chat(
           type: "function",
           function: {
             name: "web_search",
-            description: "Search the web for information",
+            description:
+              "Search the web for information. You can provide multiple queries to get more comprehensive results.",
             parameters: {
               type: "object",
               properties: {
-                query: {
-                  type: "string",
-                  description: "The query to search for",
+                queries: {
+                  type: "array",
+                  items: {
+                    type: "string",
+                  },
+                  description:
+                    "An array of search queries to perform. Use multiple queries for better coverage of complex topics.",
                 },
               },
-              required: ["query"],
+              required: ["queries"],
             },
           },
         },
@@ -89,12 +96,15 @@ export async function chat(
         res.tool_calls.map(async (toolCall) => {
           if (toolCall.function.name === "web_search") {
             const args = JSON.parse(toolCall.function.arguments);
-            const searchResults = await webSearch(args.query);
+            // Perform multiple searches and combine results
+            const searchResults = await Promise.all(
+              args.queries.map((query: string) => webSearch(query))
+            );
             return {
               tool_call_id: toolCall.id,
               role: "tool" as const,
               name: toolCall.function.name,
-              content: JSON.stringify(searchResults),
+              content: JSON.stringify(searchResults.flat()),
             };
           }
           throw new Error(`Unknown tool: ${toolCall.function.name}`);
