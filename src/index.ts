@@ -6,6 +6,12 @@ import puppeteer from "puppeteer";
 import "dotenv/config";
 import { updateStats } from "./stats.js";
 import { extractTextFromPDF } from "./utils.js";
+import {
+  initializeWhitelist,
+  addToWhitelist,
+  isAuthorized,
+  ADMIN_NUMBER,
+} from "./whitelist.js";
 
 const client = new whatsapp.Client({
   authStrategy: new whatsapp.LocalAuth(),
@@ -23,6 +29,7 @@ const client = new whatsapp.Client({
 
 client.once("ready", async () => {
   console.log("Client is ready!");
+  await initializeWhitelist();
   client.sendPresenceAvailable();
 });
 
@@ -32,6 +39,35 @@ client.on("qr", (qr) => {
 });
 
 client.on("message", async (message) => {
+  // Get the sender's number without the @c.us
+  const senderNumber = message.from.split("@")[0];
+
+  // Check if it's an admin command to add a number
+  if (senderNumber === ADMIN_NUMBER && message.body.startsWith("/add")) {
+    const newNumber = message.body.split(" ")[1];
+    if (!newNumber) {
+      await message.reply("Please provide a phone number to add.");
+      return;
+    }
+
+    const added = await addToWhitelist(newNumber);
+    await message.reply(
+      added
+        ? `Number ${newNumber} has been added to the whitelist.`
+        : `Number ${newNumber} is already in the whitelist.`
+    );
+    return;
+  }
+
+  // Check if the sender is authorized
+  const authorized = await isAuthorized(senderNumber);
+  if (!authorized) {
+    await message.reply(
+      "Sorry, you are not authorized to use this bot due to huge costs associated with maintaining access. If you really want to use the bot, please contact the creator via email at leo@turing.sh."
+    );
+    return;
+  }
+
   // Ignore group messages
   const mentions = await message.getMentions();
   const isGroup = message.from.includes("@g.us");
