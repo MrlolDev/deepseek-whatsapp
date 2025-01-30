@@ -27,14 +27,20 @@ async function loadWhitelist(): Promise<string[]> {
   return whitelist.authorizedNumbers;
 }
 
+// Clean phone number by removing spaces, + and - signs
+function cleanPhoneNumber(number: string): string {
+  return number.replace(/[\s+-]/g, "");
+}
+
 // Add a new number to the whitelist
 async function addToWhitelist(number: string): Promise<boolean> {
   const whitelist = await loadWhitelist();
-  if (whitelist.includes(number)) {
+  const cleanedNumber = cleanPhoneNumber(number);
+  if (whitelist.includes(cleanedNumber)) {
     return false;
   }
 
-  whitelist.push(number);
+  whitelist.push(cleanedNumber);
   await fs.writeFile(
     WHITELIST_FILE,
     JSON.stringify({ authorizedNumbers: whitelist }, null, 2)
@@ -45,8 +51,9 @@ async function addToWhitelist(number: string): Promise<boolean> {
 // Check if a number is authorized
 async function isAuthorized(number: string): Promise<boolean> {
   const whitelist = await loadWhitelist();
+  const cleanedNumber = cleanPhoneNumber(number);
   return whitelist.some((authorizedNumber) =>
-    number.includes(authorizedNumber)
+    cleanedNumber.includes(cleanPhoneNumber(authorizedNumber))
   );
 }
 
