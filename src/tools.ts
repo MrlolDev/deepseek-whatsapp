@@ -42,8 +42,3 @@ export async function webSearch(query: string): Promise<SearchResult[]> {
     throw new Error("Failed to perform web search");
   }
 }
-
-(async () => {
-  const results = await webSearch("What is the weather in Tokyo?");
-  console.log(results);
-})();
