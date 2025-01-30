@@ -103,9 +103,13 @@ export async function chat(
             const args = JSON.parse(toolCall.function.arguments);
             // Perform multiple searches and combine results
             const searchResults = await Promise.all(
-              args.queries.map((query: string) =>
-                webSearch(query, args.country || "US")
-              )
+              args.queries.map(async (query: string, index: number) => {
+                // Add delay for all searches after the first one
+                if (index > 0) {
+                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                }
+                return webSearch(query, args.country || "US");
+              })
             );
             return {
               tool_call_id: toolCall.id,
