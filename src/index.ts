@@ -21,8 +21,29 @@ const client = new whatsapp.Client({
   },
 });
 
-client.once("ready", () => {
+client.once("ready", async () => {
   console.log("Client is ready!");
+
+  try {
+    // Get all chats with unread messages
+    const chats = await client.getChats();
+    const unreadChats = chats.filter((chat) => chat.unreadCount > 0);
+
+    for (const chat of unreadChats) {
+      // Fetch unread messages
+      const messages = await chat.fetchMessages({
+        limit: chat.unreadCount,
+      });
+
+      // Process each unread message
+      for (const message of messages) {
+        // Emit message event to reuse existing message handler
+        client.emit("message", message);
+      }
+    }
+  } catch (error) {
+    console.error("Error processing unread messages:", error);
+  }
 });
 
 client.on("qr", (qr) => {
