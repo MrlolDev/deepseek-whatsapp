@@ -192,6 +192,7 @@ client.on("message", async (message) => {
     // Send the response
     await message.reply(response.answer);
   } catch (error) {
+    console.error("Error processing message:", error);
     try {
       const wChat = await message.getChat();
       await wChat.clearMessages();
