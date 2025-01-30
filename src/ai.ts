@@ -100,9 +100,15 @@ export async function chat(
           throw new Error(`Unknown tool: ${toolCall.function.name}`);
         })
       );
-      console.log(res);
       // Add the tool results to messages and make a follow-up call
-      return chat([...messages, res, ...toolResults]);
+      return chat([
+        ...messages,
+        {
+          role: res.role,
+          tool_calls: res.tool_calls,
+        },
+        ...toolResults,
+      ]);
     }
 
     const fullAnswer = res.content ?? "";
