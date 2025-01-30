@@ -161,7 +161,7 @@ export async function chat(
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   const file = new File([audioBuffer], "audio.wav", { type: "audio/wav" });
   const response = await groq.audio.transcriptions.create({
-    model: "whisper-large-v3",
+    model: "whisper-large-v3-turbo",
     file,
   });
   return response.text;
