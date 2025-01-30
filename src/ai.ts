@@ -106,10 +106,7 @@ export async function chat(
     }
 
     const fullAnswer = res.content ?? "";
-    console.log(fullAnswer);
-    const thinking = fullAnswer.split("<think>")[1]?.split("</think>")[0] ?? "";
-    const answer = fullAnswer.split("</think>")[1]?.trim() ?? "";
-    return { answer, thinking };
+    return { answer: fullAnswer };
   } catch (error) {
     const models = [
       "llama-3.3-70b-versatile",
