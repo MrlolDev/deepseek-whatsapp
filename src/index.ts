@@ -103,7 +103,7 @@ client.on("message", async (message) => {
     }
     await wChat.sendStateTyping();
     const history = await wChat.fetchMessages({
-      limit: isGroup ? 50 : 15,
+      limit: isGroup ? 25 : 5,
     });
 
     // Format messages for the AI

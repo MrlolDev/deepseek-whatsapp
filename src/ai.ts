@@ -82,7 +82,7 @@ export async function chat(
         },
         ...messages,
       ],
-      max_tokens: 2048,
+      max_tokens: 1024,
       tool_choice: "auto",
       tools: [
         {
@@ -218,7 +218,7 @@ export async function chat(
         },
         ...messages,
       ],
-      max_tokens: 2048,
+      max_tokens: 1024,
     });
     const fullAnswer = fallbackResponse.choices[0].message.content ?? "";
     return { answer: fullAnswer, imageBuffer };
