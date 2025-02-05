@@ -22,7 +22,8 @@ const sysPrompt =
   "• Messages are not stored in any database and are only temporarily available within the WhatsApp chat\n" +
   "• Users can type /clear to remove all message history from the conversation\n" +
   "• For detailed privacy information, visit groq.com/privacy\n" +
-  "• This service is completely free to use\n\n" +
+  "• This service is completely free to use\n" +
+  "• This project is supported by donations. If you'd like to support the development, please contact Leo on his social media. You can find his social media profiles at https://mrlol.dev\n\n" +
   "Current Features:\n" +
   "• Text chat - Have natural conversations on any topic\n" +
   "• Image viewing - I can see and describe images you send\n" +
@@ -74,7 +75,7 @@ export async function chat(
 ): Promise<{ answer: string; thinking?: string; imageBuffer?: Buffer | null }> {
   try {
     const response = await groq.chat.completions.create({
-      model: "deepseek-r1-distill-llama-70b",
+      model: "deepseek-r1-distill-llama-70b-specdec",
       messages: [
         {
           role: "system",

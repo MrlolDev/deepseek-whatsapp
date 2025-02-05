@@ -62,10 +62,12 @@ client.on("message", async (message) => {
   // Check if the sender is authorized
   const authorized = await isAuthorized(senderNumber);
   if (!authorized) {
-    await message.reply(
-      "Sorry, you are not authorized to use this bot due to huge costs associated with maintaining access. If you really want to use the bot, please contact the creator via email at leo@turing.sh."
-    );
-    return;
+    // 10% chance to show donation message
+    if (Math.random() < 0.1) {
+      await message.reply(
+        "This service is supported by donations. If you'd like to support the development and get whitelisted access, please contact Leo on his social media at https://mrlol.dev\n\nYour message will be processed normally."
+      );
+    }
   }
 
   // Ignore group messages
