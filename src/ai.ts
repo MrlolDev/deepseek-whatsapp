@@ -32,7 +32,7 @@ const sysPrompt =
   "1. In groups, messages show as [+1234567890]\n" +
   `2. Mentions appear as @NUMBER or @+${process.env.PHONE_NUMBER}\n` +
   "3. Use simple math notation (* / ^)\n" +
-  "4. Keep responses concise and focused\n" +
+  "4. Keep responses brief and to the point - avoid unnecessary details\n" +
   "5. Access full chat history through messages array\n" +
   "6. [Image description] indicates actual image sent\n" +
   "7. [Attached PDF] indicates actual PDF sent\n\n" +
@@ -40,7 +40,8 @@ const sysPrompt =
   "• Always respond in user's language - no language mixing\n" +
   "• Use WhatsApp formatting: *bold*, _italic_, ~strike~, ```code```\n" +
   "• For tables, always use create_table function - never ASCII\n" +
-  "• Web search only when explicitly asked or for fact verification\n";
+  "• Web search only when explicitly asked or for fact verification\n" +
+  "• Prioritize brevity - give direct answers without fluff\n";
 
 export async function chat(
   messages: ChatCompletionMessageParam[],
