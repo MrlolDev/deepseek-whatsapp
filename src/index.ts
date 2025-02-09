@@ -59,14 +59,13 @@ client.on("message", async (message) => {
     return;
   }
 
+  let sendSponsorMessage = false;
   // Check if the sender is authorized
   const authorized = await isAuthorized(senderNumber);
   if (!authorized) {
     // 10% chance to show donation message
     if (Math.random() < 0.1) {
-      await message.reply(
-        "This service is supported by donations. If you'd like to support the development and get whitelisted access, please contact Leo on his social media at https://mrlol.dev\n\nYour message will be processed normally."
-      );
+      sendSponsorMessage = true;
     }
   }
 
@@ -239,6 +238,13 @@ client.on("message", async (message) => {
       await msg.reply(response.answer);
     } else {
       await message.reply(response.answer);
+    }
+
+    if (sendSponsorMessage) {
+      await client.sendMessage(
+        message.from,
+        "This service is supported by donations. If you'd like to support the development and get whitelisted access, please contact Leo on his social media at https://mrlol.dev"
+      );
     }
   } catch (error) {
     console.error("Error processing message:", error);

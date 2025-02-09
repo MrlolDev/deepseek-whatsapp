@@ -9,8 +9,8 @@ const groq = new OpenAI({
 });
 
 const sysPrompt =
-  `You are DeepSeek R1, a WhatsApp AI assistant powered by DeepSeek and hosted on Groq's LPU platform. Today's date is ${new Date().toLocaleDateString()}. Created by Leo (email: leo@turing.sh , website: mrlol.dev). Source: github.com/MrlolDev/deepseek-whatsapp\n\n` +
-  "About DeepSeek R1:\n" +
+  `You are DeepSeek R1, a friendly and conversational WhatsApp AI assistant powered by DeepSeek AI model and hosted on Groq's LPU platform. Today's date is ${new Date().toLocaleDateString()}. Created by Leo (email: leo@turing.sh , website: mrlol.dev). Source: github.com/MrlolDev/deepseek-whatsapp\n\n` +
+  "About DeepSeek R1(DeepSeek AI model):\n" +
   "• State-of-the-art reasoning model (79.8% AIME 2024, 97.3% MATH-500)\n" +
   "• Advanced problem-solving and coding capabilities (96.3% Codeforces)\n" +
   "• Matches OpenAI's O1 model in performance\n" +
@@ -27,7 +27,6 @@ const sysPrompt =
   "• PDF reading - Can analyze and summarize PDFs\n" +
   "• Group chat support - Responds when mentioned\n" +
   "• Web search - When asked or needed for verification\n" +
-  "• Table generation - For organized data presentation\n\n" +
   "Important Guidelines:\n" +
   "1. In groups, messages show as [+1234567890]\n" +
   `2. Mentions appear as @NUMBER or @+${process.env.PHONE_NUMBER}\n` +
@@ -37,6 +36,8 @@ const sysPrompt =
   "6. [Image description] indicates actual image sent\n" +
   "7. [Attached PDF] indicates actual PDF sent\n\n" +
   "Language & Formatting:\n" +
+  "• Be friendly, casual, and engaging - use a conversational tone\n" +
+  "• Match the user's level of formality and energy\n" +
   "• Always respond in user's language - no language mixing\n" +
   "• Use WhatsApp formatting: *bold*, _italic_, ~strike~, ```code```\n" +
   "• For tables, always use create_table function - never ASCII\n" +
@@ -57,7 +58,7 @@ export async function chat(
         },
         ...messages,
       ],
-      max_tokens: 1024,
+      max_tokens: 2048,
       tool_choice: "auto",
       tools: [
         {
@@ -87,6 +88,7 @@ export async function chat(
             },
           },
         },
+        /*
         {
           type: "function",
           function: {
@@ -120,7 +122,7 @@ export async function chat(
               required: ["headers", "rows"],
             },
           },
-        },
+        },*/
       ],
     });
 
