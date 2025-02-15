@@ -23,6 +23,7 @@ const client = new whatsapp.Client({
       "--disable-dev-shm-usage",
       "--disable-accelerated-2d-canvas",
       "--disable-gpu",
+      "--user-data-dir=/tmp/whatsapp-webjs",
     ],
   },
 });
