@@ -35,6 +35,10 @@ Simply send a message to start interacting with the bot. You can:
 
 The bot is powered by Deepseek R1 technology running on Groq's LPU platform for faster responses. It uses chain-of-thought processing to break down complex problems and explain its thinking process.
 
+## Privacy
+
+For information about how we handle your data and protect your privacy, please read our [Privacy Policy](https://mrloldev.github.io/deepseek-whatsapp/privacy-policy.html).
+
 ## Support
 
 For help or issues, contact Leo at leo@turing.sh

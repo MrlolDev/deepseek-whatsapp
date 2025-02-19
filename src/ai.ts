@@ -2,6 +2,8 @@ import OpenAI from "openai";
 import "dotenv/config";
 import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { createTableImage, webSearch } from "./tools.js";
+import { CacheManager } from "./cacheManager.js";
+import * as crypto from 'crypto';
 
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
@@ -26,7 +28,13 @@ const sysPrompt =
   "• Audio transcription - Can process voice messages\n" +
   "• PDF reading - Can analyze and summarize PDFs\n" +
   "• Group chat support - Responds when mentioned\n" +
-  "• Web search - When asked or needed for verification\n" +
+  "• Web search - When asked or needed for verification\n\n" +
+  "Premium Features for Donors:\n" +
+  "• Access to more advanced AI model with enhanced reasoning capabilities\n" +
+  "• Early access to beta features and updates\n" +
+  "• Priority response times\n" +
+  "• Extended context window for longer conversations\n" +
+  "• Support development and get exclusive features (donate at mrlol.dev)\n\n" +
   "Important Guidelines:\n" +
   "1. In groups, messages show as [+1234567890]\n" +
   `2. Mentions appear as @NUMBER or @+${process.env.PHONE_NUMBER}\n` +
@@ -177,6 +185,15 @@ export async function chat(
     }
 
     const fullAnswer = res.content ?? "";
+
+    // Validate that we have a non-empty response
+    if (!fullAnswer.trim()) {
+      return { 
+        answer: "I apologize, but I couldn't generate a proper response. Could you please rephrase your message or try again?", 
+        imageBuffer 
+      };
+    }
+
     return { answer: fullAnswer, imageBuffer };
   } catch (error) {
     const models = [
@@ -198,43 +215,99 @@ export async function chat(
       max_tokens: 1024,
     });
     const fullAnswer = fallbackResponse.choices[0].message.content ?? "";
+
+    // Validate fallback response as well
+    if (!fullAnswer.trim()) {
+      return { 
+        answer: "I encountered an error and couldn't generate a proper response. Please try again in a moment.", 
+        imageBuffer 
+      };
+    }
+
     return { answer: fullAnswer, imageBuffer };
   }
 }
 
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
+  const cacheManager = CacheManager.getInstance();
+  const bufferKey = crypto.createHash('sha256').update(audioBuffer).digest('hex');
+  
+  // Check cache first
+  const cachedTranscription = cacheManager.get(bufferKey, 'transcription');
+  if (cachedTranscription) {
+    return cachedTranscription;
+  }
+
+  // If not in cache, perform transcription
   const file = new File([audioBuffer], "audio.wav", { type: "audio/wav" });
   const response = await groq.audio.transcriptions.create({
     model: "whisper-large-v3-turbo",
     file,
   });
+
+  // Save to cache
+  cacheManager.set(bufferKey, response.text, 'transcription');
+  
   return response.text;
 }
 
 export async function vision(imageUrl: string): Promise<string> {
-  const response = await groq.chat.completions.create({
-    model: "llama-3.2-11b-vision-preview",
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Please describe this image in a few words. Be concise and clear.",
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: imageUrl,
+  const cacheManager = CacheManager.getInstance();
+  
+  // Check cache first
+  const cachedResult = cacheManager.get(imageUrl, 'image');
+  if (cachedResult) {
+    return cachedResult;
+  }
+
+  // If not in cache, perform vision analysis
+  const [descriptionResponse, ocrResponse] = await Promise.all([
+    // Get image description using Llama
+    groq.chat.completions.create({
+      model: "llama-3.2-11b-vision-preview",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Please describe this image in a few words. Be concise and clear.",
             },
-          },
-        ],
+            {
+              type: "image_url",
+              image_url: {
+                url: imageUrl,
+              },
+            },
+          ],
+        },
+      ],
+    }),
+    // Get OCR text using OCR.space with multi-language support
+    fetch('https://api.ocr.space/parse/imageurl', {
+      method: 'POST',
+      headers: {
+        'apikey': process.env.OCR_SPACE_API_KEY || '',
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
-    ],
-    max_tokens: 1024,
-  });
+      body: new URLSearchParams({
+        url: imageUrl,
+        detectOrientation: 'true',
+        scale: 'true',
+        OCREngine: '2',
+        isTable: 'true',
+        language: 'mul' // This enables multi-language detection
+      })
+    }).then(res => res.json())
+  ]);
 
-  const caption = response.choices[0].message.content ?? "";
-
-  return caption;
+  const description = descriptionResponse.choices[0]?.message?.content || "No description available";
+  const ocrText = ocrResponse?.ParsedResults?.[0]?.ParsedText?.trim() || "No text found";
+  
+  const result = `Image Description: ${description}\n${ocrText ? `Text found in image: ${ocrText}` : ''}`;
+  
+  // Save to cache
+  cacheManager.set(imageUrl, result, 'image');
+  
+  return result;
 }
