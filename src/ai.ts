@@ -22,7 +22,7 @@ const sysPrompt =
   "Privacy & Security:\n" +
   "• Hosted on US-based Groq infrastructure\n" +
   "• No permanent message storage\n" +
-  "• Type /clear to remove chat history\n" +
+  "• The user can type /clear to remove chat history\n" +
   "• Free service, supported by donations (contact Leo at mrlol.dev)\n\n" +
   "Current Features:\n" +
   "• Text chat - Natural conversations on any topic\n" +
