@@ -4,8 +4,8 @@ export class MessageManager {
     private static instance: MessageManager;
     private activeChats: Map<string, boolean>;
     private replyCache: Map<string, number>;
-    private readonly TYPING_DURATION = 3000; // 3 seconds
-    private readonly CACHE_EXPIRY = 30000; // 30 seconds
+    private readonly TYPING_DURATION = 1000; // 1 seconds
+    private readonly CACHE_EXPIRY = 3000; // 3 seconds
 
     private constructor() {
         this.activeChats = new Map();
