@@ -266,7 +266,7 @@ export async function vision(imageUrl: string): Promise<string> {
   const [descriptionResponse, ocrResponse] = await Promise.all([
     // Get image description using Llama
     groq.chat.completions.create({
-      model: "llama-3.2-11b-vision-preview",
+      model: "llama-3.2-90b-vision-preview",
       messages: [
         {
           role: "user",
@@ -286,7 +286,7 @@ export async function vision(imageUrl: string): Promise<string> {
       ],
     }),
     // Get OCR text using OCR.space with multi-language support
-    fetch('https://api.ocr.space/parse/imageurl', {
+    fetch('https://api.ocr.space/parse/image', {
       method: 'POST',
       headers: {
         'apikey': process.env.OCR_SPACE_API_KEY || '',
