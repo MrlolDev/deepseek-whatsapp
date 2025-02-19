@@ -296,7 +296,7 @@ export async function vision(imageUrl: string): Promise<string> {
         scale: 'true',
         OCREngine: '2',
         isTable: 'true',
-        language: 'mul' // This enables multi-language detection
+        language: 'auto' // This enables multi-language detection
       })
     }).then(res => res.json())
   ]);
