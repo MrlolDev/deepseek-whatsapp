@@ -303,7 +303,7 @@ export async function vision(imageUrl: string): Promise<string> {
 
   const description = descriptionResponse.choices[0]?.message?.content || "No description available";
   const ocrText = ocrResponse?.ParsedResults?.[0]?.ParsedText?.trim() || "No text found";
-  
+  console.log(description, ocrText);
   const result = `Image Description: ${description}\n${ocrText ? `Text found in image: ${ocrText}` : ''}`;
   
   // Save to cache
