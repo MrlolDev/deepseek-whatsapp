@@ -269,7 +269,7 @@ client.on("message", async (message) => {
       if (sendSponsorMessage) {
         await client.sendMessage(
           message.from,
-          "This service is supported by donations. If you'd like to support the development and get whitelisted access, please contact Leo on his social media at https://mrlol.dev"
+          "This service is supported by donations. By donating, you'll get access to premium features including better AI models, beta features, and priority support. Contact Leo on his social media at https://mrlol.dev to become a supporter!"
         );
       }
     } catch (error) {
