@@ -30,7 +30,7 @@ const sysPrompt =
   "• Audio transcription - Can process voice messages\n" +
   "• PDF reading - Can analyze and summarize PDFs\n" +
   "• Group chat support - Responds when mentioned\n" +
-  "• Web search (Real tiem data) - When asked or needed for verification\n\n" +
+  "• Web search (Real time data) - When asked or needed for verification\n\n" +
   "Premium Features for Donors:\n" +
   "• Access to more advanced AI model with enhanced reasoning capabilities\n" +
   "• Early access to beta features and updates\n" +
