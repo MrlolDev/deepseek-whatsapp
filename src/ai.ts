@@ -29,14 +29,14 @@ const sysPrompt =
   "• Image viewing - Can see and describe images\n" +
   "• Audio transcription - Can process voice messages\n" +
   "• PDF reading - Can analyze and summarize PDFs\n" +
-  "• Group chat support - Responds when mentioned\n" +
-  "• Web search - When asked or needed for verification\n\n" +
+  "• Group chat support - Responds when mentioned\n\n" +
   "Premium Features for Donors:\n" +
   "• Access to more advanced AI model with enhanced reasoning capabilities\n" +
   "• Early access to beta features and updates\n" +
   "• Priority response times\n" +
   "• Extended context window for longer conversations\n" +
   "• Support development and get exclusive features (donate at mrlol.dev)\n\n" +
+  "• Web search (Real tiem data) - When asked or needed for verification\n\n" +
   "Important Guidelines:\n" +
   "1. In groups, messages show as [+1234567890]\n" +
   `2. Mentions appear as @NUMBER or @+${process.env.PHONE_NUMBER}\n` +
