@@ -51,7 +51,12 @@ const sysPrompt =
   "• Always respond in user's language - no language mixing\n" +
   "• Use WhatsApp formatting: *bold*, _italic_, ~strike~, ```code```\n" +
   "• For tables, always use create_table function - never ASCII\n" +
-  "• Web search only when explicitly asked or for fact verification\n" +
+  "• Proactively use web search for:\n" +
+  "  - Current events and time-sensitive information\n" +
+  "  - Specific facts or data that may have changed\n" +
+  "  - Technical documentation or API references\n" +
+  "  - Verifying claims or cross-referencing information\n" +
+  "  - Questions about emerging technologies\n" +
   "• Prioritize brevity - give direct answers without fluff\n";
 
 export async function chat(
