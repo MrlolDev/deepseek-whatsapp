@@ -29,14 +29,14 @@ const sysPrompt =
   "• Image viewing - Can see and describe images\n" +
   "• Audio transcription - Can process voice messages\n" +
   "• PDF reading - Can analyze and summarize PDFs\n" +
-  "• Group chat support - Responds when mentioned\n\n" +
+  "• Group chat support - Responds when mentioned\n" +
+  "• Web search (Real tiem data) - When asked or needed for verification\n\n" +
   "Premium Features for Donors:\n" +
   "• Access to more advanced AI model with enhanced reasoning capabilities\n" +
   "• Early access to beta features and updates\n" +
   "• Priority response times\n" +
   "• Extended context window for longer conversations\n" +
   "• Support development and get exclusive features (donate at mrlol.dev)\n\n" +
-  "• Web search (Real tiem data) - When asked or needed for verification\n\n" +
   "Important Guidelines:\n" +
   "1. In groups, messages show as [+1234567890]\n" +
   `2. Mentions appear as @NUMBER or @+${process.env.PHONE_NUMBER}\n` +
@@ -76,17 +76,14 @@ export async function chat(
           function: {
             name: "web_search",
             description:
-              "Search the web for information. You can provide multiple queries to get more comprehensive results.",
+              "Search the web for information. You can provide multiple queries to get more comprehensive results. Say always the sources where you got the information.",
             parameters: {
               type: "object",
               properties: {
-                queries: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                  },
+                query: {
+                  type: "string",
                   description:
-                    "An array of search queries to perform. Use multiple queries for better coverage of complex topics.",
+                    "The search query to perform. Try to make it exact and concise.",
                 },
                 country: {
                   type: "string",
@@ -145,19 +142,12 @@ export async function chat(
         res.tool_calls.map(async (toolCall) => {
           if (toolCall.function.name === "web_search") {
             const args = JSON.parse(toolCall.function.arguments);
-            const searchResults = await Promise.all(
-              args.queries.map(async (query: string, index: number) => {
-                if (index > 0) {
-                  await new Promise((resolve) => setTimeout(resolve, 1000));
-                }
-                return webSearch(query, args.country || "US");
-              })
-            );
+            const searchResults = await webSearch(args.query, args.country || "US");
             return {
               tool_call_id: toolCall.id,
               role: "tool" as const,
               name: toolCall.function.name,
-              content: JSON.stringify(searchResults.flat()),
+              content: JSON.stringify(searchResults),
             };
           } else if (toolCall.function.name === "create_table") {
             const args = JSON.parse(toolCall.function.arguments);
