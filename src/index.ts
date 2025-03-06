@@ -173,27 +173,18 @@ client.on("message", async (message) => {
         return;
       }
       const history = await wChat.fetchMessages({
-        limit: isGroup ? 25 : 5,
+        limit: 10,
       });
 
       // Format messages for the AI
       let messages: ChatCompletionMessageParam[] = [];
-      // Add system message at the start of every conversation
-      messages.push({
-        role: "system",
-        content:
-          "You are a helpful AI assistant. Be concise and clear in your responses.",
-      });
 
       // Limit total message history size to prevent token overflow
-      const MAX_HISTORY_LENGTH = 4000;
-      let currentHistoryLength = 0;
 
       for (const msg of history.reverse()) {
         // Process messages from oldest to newest
         if (msg.body.startsWith("/clear")) {
-          messages = [messages[0]]; // Keep system message, clear the rest
-          currentHistoryLength = 0;
+          messages = []; // Keep system message, clear the rest
           continue;
         }
 
@@ -239,34 +230,18 @@ client.on("message", async (message) => {
             messageContent = `[${msg.author}] ${messageContent}`;
           }
 
-          // Check if adding this message would exceed the limit
-          if (
-            currentHistoryLength + messageContent.length >
-            MAX_HISTORY_LENGTH
-          ) {
-            // Remove oldest messages (except system message) until we have space
-            while (
-              messages.length > 1 &&
-              currentHistoryLength + messageContent.length > MAX_HISTORY_LENGTH
-            ) {
-              const removed = messages.splice(1, 1)[0];
-              currentHistoryLength -= (removed.content?.toString() ?? "")
-                .length;
-            }
-          }
-
           // Add the message to history
           messages.push({
             role: msg.fromMe ? "assistant" : "user",
             content: messageContent,
           });
-          currentHistoryLength += messageContent.length;
         } catch (error) {
           console.warn("Error processing message in history:", error);
           // Continue with next message if one fails
           continue;
         }
       }
+      console.log(messages);
 
       // Get AI response
       const response = await chat(messages, senderNumber);
