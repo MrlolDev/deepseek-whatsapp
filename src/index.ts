@@ -1,19 +1,20 @@
 import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
-import { chat, transcribeAudio, vision } from "./ai.js";
+import { chat, transcribeAudio, vision } from "./ai/llm.js";
 import whatsapp from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
 import puppeteer from "puppeteer";
 import "dotenv/config";
-import { updateStats } from "./stats.js";
+import { updateStats } from "./managers/stats.js";
 import { extractTextFromPDF } from "./utils.js";
 import {
   initializeWhitelist,
   addToWhitelist,
   isAuthorized,
   ADMIN_NUMBER,
-} from "./whitelist.js";
-import { PrivacyManager } from "./privacyManager.js";
-import { MessageManager } from "./messageManager.js";
+} from "./managers/whitelist.js";
+import { PrivacyManager } from "./managers/privacyManager.js";
+import { MessageManager } from "./managers/messageManager.js";
+import { ReminderManager } from "./managers/reminderManager.js";
 
 const client = new whatsapp.Client({
   authStrategy: new whatsapp.LocalAuth(),
@@ -33,6 +34,8 @@ const client = new whatsapp.Client({
 client.once("ready", async () => {
   console.log("Client is ready!");
   await initializeWhitelist();
+  const reminderManager = ReminderManager.getInstance();
+  reminderManager.setClient(client);
   client.sendPresenceAvailable();
 });
 
@@ -138,9 +141,13 @@ client.on("message", async (message) => {
       }
 
       // Handle unsupported media types explicitly
-      if (message.type === "call_log" || message.type === "video" || message.type == "location") {
+      if (
+        message.type === "call_log" ||
+        message.type === "video" ||
+        message.type == "location"
+      ) {
         await message.reply(
-          "Please send a valid message. I do not support calls, videos, or voice messages."
+          "Please send a valid message. I do not support calls, videos, or location messages."
         );
         return;
       }
@@ -157,101 +164,112 @@ client.on("message", async (message) => {
       }
 
       // Get chat history
-    await wChat.sendSeen();
-    if (userInput.startsWith("/clear")) {
-      await wChat.clearMessages();
-      await wChat.sendMessage(
-        "Chat history cleared. This will remove all messages from the chat."
-      );
-      return;
-    }
-    const history = await wChat.fetchMessages({
+      await wChat.sendSeen();
+      if (userInput.startsWith("/clear")) {
+        await wChat.clearMessages();
+        await wChat.sendMessage(
+          "Chat history cleared. This will remove all messages from the chat."
+        );
+        return;
+      }
+      const history = await wChat.fetchMessages({
         limit: isGroup ? 25 : 5,
       });
 
       // Format messages for the AI
       let messages: ChatCompletionMessageParam[] = [];
-      for (const msg of history) {
+      // Add system message at the start of every conversation
+      messages.push({
+        role: "system",
+        content:
+          "You are a helpful AI assistant. Be concise and clear in your responses.",
+      });
+
+      // Limit total message history size to prevent token overflow
+      const MAX_HISTORY_LENGTH = 4000;
+      let currentHistoryLength = 0;
+
+      for (const msg of history.reverse()) {
+        // Process messages from oldest to newest
         if (msg.body.startsWith("/clear")) {
-          messages = []; // remove all the previous messages
+          messages = [messages[0]]; // Keep system message, clear the rest
+          currentHistoryLength = 0;
           continue;
         }
-        if (msg.hasMedia) {
-          const media = await msg.downloadMedia();
 
-          // Handle voice messages in history
-          if (msg.type == "ptt" || msg.type == "audio") {
-            const transcription = await transcribeAudio(
-              Buffer.from(media.data, "base64")
-            );
-            let content = transcription;
-            if (isGroup && !msg.fromMe) {
-              content = `[${msg.author}] ${content}`;
-            }
-            messages.push({
-              role: "user",
-              content,
-            });
-          } else if (msg.type == "sticker") {
-            const stickerDescription = await vision(media.data);
-            let content = msg.body
-              ? `[Sticker description: ${stickerDescription}] ${msg.body}`
-              : `[Sticker description: ${stickerDescription}]`;
-            if (isGroup && !msg.fromMe) {
-              content = `[${msg.author}] ${content}`;
-            }
-            messages.push({
-              role: msg.fromMe ? "assistant" : "user",
-              content,
-            });
-          } else if (msg.type == "document") {
-            if (media.mimetype === "application/pdf") {
+        let messageContent = "";
+
+        try {
+          if (msg.hasMedia) {
+            const media = await msg.downloadMedia();
+
+            // Handle different media types
+            if (msg.type === "ptt" || msg.type === "audio") {
+              messageContent = await transcribeAudio(
+                Buffer.from(media.data, "base64")
+              );
+            } else if (msg.type === "sticker") {
+              const stickerDescription = await vision(media.data);
+              messageContent = msg.body
+                ? `[Sticker: ${stickerDescription}] ${msg.body}`
+                : `[Sticker: ${stickerDescription}]`;
+            } else if (
+              msg.type === "document" &&
+              media.mimetype === "application/pdf"
+            ) {
               const pdfData = await extractTextFromPDF(
                 Buffer.from(media.data, "base64")
               );
-              let content = msg.body
-                ? `[Attached PDF: ${pdfData}] ${msg.body}`
-                : `[Attached PDF: ${pdfData}]`;
-              if (isGroup && !msg.fromMe) {
-                content = `[${msg.author}] ${content}`;
-              }
-              messages.push({
-                role: msg.fromMe ? "assistant" : "user",
-                content,
-              });
+              messageContent = msg.body
+                ? `[PDF: ${pdfData}] ${msg.body}`
+                : `[PDF: ${pdfData}]`;
+            } else if (msg.type === "image") {
+              const dataUrl = `data:${media.mimetype};base64,${media.data}`;
+              const imageDescription = await vision(dataUrl);
+              messageContent = msg.body
+                ? `[Image: ${imageDescription}] ${msg.body}`
+                : `[Image: ${imageDescription}]`;
+            }
+          } else {
+            messageContent = msg.body;
+          }
+
+          // Add group context if needed
+          if (isGroup && !msg.fromMe) {
+            messageContent = `[${msg.author}] ${messageContent}`;
+          }
+
+          // Check if adding this message would exceed the limit
+          if (
+            currentHistoryLength + messageContent.length >
+            MAX_HISTORY_LENGTH
+          ) {
+            // Remove oldest messages (except system message) until we have space
+            while (
+              messages.length > 1 &&
+              currentHistoryLength + messageContent.length > MAX_HISTORY_LENGTH
+            ) {
+              const removed = messages.splice(1, 1)[0];
+              currentHistoryLength -= (removed.content?.toString() ?? "")
+                .length;
             }
           }
 
-          // Handle images in history
-          else if (msg.type === "image") {
-            // Convert the base64 image to a data URL
-            const dataUrl = `data:${media.mimetype};base64,${media.data}`;
-            const imageDescription = await vision(dataUrl);
-            let content = msg.body
-              ? `[Image description: ${imageDescription}] ${msg.body}`
-              : `[Image description: ${imageDescription}]`;
-            if (isGroup && !msg.fromMe) {
-              content = `[${msg.author}] ${content}`;
-            }
-            messages.push({
-              role: msg.fromMe ? "assistant" : "user",
-              content,
-            });
-          }
-        } else {
-          let content = msg.body;
-          if (isGroup && !msg.fromMe) {
-            content = `[${msg.author}] ${content}`;
-          }
+          // Add the message to history
           messages.push({
             role: msg.fromMe ? "assistant" : "user",
-            content,
+            content: messageContent,
           });
+          currentHistoryLength += messageContent.length;
+        } catch (error) {
+          console.warn("Error processing message in history:", error);
+          // Continue with next message if one fails
+          continue;
         }
       }
 
       // Get AI response
-      const response = await chat(messages);
+      const response = await chat(messages, senderNumber);
 
       // Send the response
       if (response.imageBuffer) {
@@ -269,7 +287,7 @@ client.on("message", async (message) => {
       if (sendSponsorMessage) {
         await client.sendMessage(
           message.from,
-          "This service is supported by donations. By donating, you'll get access to premium features including better AI models, beta features, and priority support. Contact Leo on his social media at https://mrlol.dev to become a supporter!\nYou can keep using the service for free, this is an educational project by an student."
+          "This service thrives on the generosity of our supporters! By contributing, you unlock premium features such as enhanced AI models, exclusive beta features, and priority support. To become a supporter, reach out to Leo on his social media at https://mrlol.dev. Remember, you can continue to enjoy this service for free, as it is an educational project created by a student."
         );
       }
     } catch (error) {
@@ -300,7 +318,6 @@ client.on("incoming_call", async (call) => {
     await call.reject();
 
     // Send a message to the caller
-    const chat = await call.from.split("@")[0];
     await client.sendMessage(
       call.from,
       "Sorry, I cannot receive calls. However, I can respond to voice messages! Feel free to send me a voice note instead."

@@ -2,8 +2,9 @@ import OpenAI from "openai";
 import "dotenv/config";
 import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { createTableImage, webSearch } from "./tools.js";
-import { CacheManager } from "./cacheManager.js";
-import * as crypto from 'crypto';
+import { CacheManager } from "../managers/cacheManager.js";
+import * as crypto from "crypto";
+import { ReminderManager } from "../managers/reminderManager.js";
 
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
@@ -11,15 +12,18 @@ const groq = new OpenAI({
 });
 
 const sysPrompt =
-  `You are DeepSeek R1, a friendly and conversational WhatsApp AI assistant powered by DeepSeek AI model and hosted on Groq's LPU platform. Today's date is ${new Date().toLocaleDateString()}. The bot (YOU) was created by Leo (email: leo@turing.sh , website: mrlol.dev). Source: github.com/MrlolDev/deepseek-whatsapp\n\n` +
-  "About DeepSeek R1(DeepSeek AI model):\n" +
+  `You are a WhatsApp AI assistant powered by DeepSeek R1, a state-of-the-art AI model created by DeepSeek AI Lab. You should be warm, friendly, and conversational in your responses - like chatting with a helpful friend. This WhatsApp integration was developed by Leo (email: leo@turing.sh, website: mrlol.dev). Today's date is ${new Date().toLocaleDateString()}.\n\n` +
+  "About DeepSeek R1:\n" +
+  "• Created by DeepSeek AI Lab (based in China)\n" +
   "• State-of-the-art reasoning model (79.8% AIME 2024, 97.3% MATH-500)\n" +
   "• Advanced problem-solving and coding capabilities (96.3% Codeforces)\n" +
+  "• Advanced computer vision capabilities for image analysis\n" +
   "• Matches OpenAI's O1 model in performance\n" +
-  "• Created by DeepSeek AI lab, based on China.\n" +
-  "• Supports any language.\n" +
+  "• Supports any language\n" +
   "• Excels in math, coding, factual QA, and instruction following\n\n" +
-  "Privacy & Security:\n" +
+  "About This Integration:\n" +
+  "• Developed by Leo (mrlol.dev)\n" +
+  "• It is open source, Source: github.com/MrlolDev/deepseek-whatsapp\n" +
   "• Hosted on US-based Groq infrastructure\n" +
   "• No permanent message storage\n" +
   "• The user can type /clear to remove chat history\n" +
@@ -30,7 +34,8 @@ const sysPrompt =
   "• Audio transcription - Can process voice messages\n" +
   "• PDF reading - Can analyze and summarize PDFs\n" +
   "• Group chat support - Responds when mentioned\n" +
-  "• Web search (Real time data) - When asked or needed for verification\n\n" +
+  "• Web search (Real time data) - When asked or needed for verification\n" +
+  "• Reminders - Can set reminders with duration (e.g., 1d, 2h, 30m)\n\n" +
   "Premium Features for Donors:\n" +
   "• Access to more advanced AI model with enhanced reasoning capabilities\n" +
   "• Early access to beta features and updates\n" +
@@ -43,29 +48,35 @@ const sysPrompt =
   "3. Use simple math notation (* / ^)\n" +
   "4. Keep responses brief and to the point - avoid unnecessary details\n" +
   "5. Access full chat history through messages array\n" +
-  "6. [Image description] indicates actual image sent\n" +
+  "6. [Image: description] indicates actual image sent. So treat it as you can see the image and not as if you are just getting a description of the image.\n" +
   "7. [Attached PDF] indicates actual PDF sent\n\n" +
   "Language & Formatting:\n" +
-  "• Be friendly, casual, and engaging - use a conversational tone\n" +
+  "• Be warm, empathetic, and engaging - use a conversational tone\n" +
+  "• Be short and concise, but not too short\n" +
+  "• Be very friendly and warm, you are a friend of the user and you make them chat more\n" +
+  "• Add appropriate emojis to make conversations more natural\n" +
+  "• Show enthusiasm when helping users\n" +
   "• Match the user's level of formality and energy\n" +
   "• Always respond in user's language - no language mixing\n" +
   "• Use WhatsApp formatting: *bold*, _italic_, ~strike~, ```code```\n" +
-  "• For tables, always use create_table function - never ASCII\n" +
+  // "• For tables, always use create_table function - never ASCII\n" +
+  // "• For reminders, use set_reminder function with format: 1d (days), 2h (hours), 30m (minutes)\n" +
   "• Proactively use web search for:\n" +
   "  - Current events and time-sensitive information\n" +
   "  - Specific facts or data that may have changed\n" +
   "  - Technical documentation or API references\n" +
   "  - Verifying claims or cross-referencing information\n" +
   "  - Questions about emerging technologies\n" +
-  "• Prioritize brevity - give direct answers without fluff\n";
+  "• Keep responses clear and concise while maintaining a friendly tone";
 
 export async function chat(
   messages: ChatCompletionMessageParam[],
+  phoneNumber: string,
   imageBuffer: Buffer | null = null
 ): Promise<{ answer: string; thinking?: string; imageBuffer?: Buffer | null }> {
   try {
     const response = await groq.chat.completions.create({
-      model: "deepseek-r1-distill-llama-70b-specdec",
+      model: "qwen-qwq-32b",
       messages: [
         {
           role: "system",
@@ -101,6 +112,30 @@ export async function chat(
           },
         },
         /*
+        {
+          type: "function",
+          function: {
+            name: "set_reminder",
+            description:
+              "Set a reminder for the user. Only use when explicitly requested. Duration format: 1d (1 day), 2h (2 hours), 30m (30 minutes)",
+            parameters: {
+              type: "object",
+              properties: {
+                message: {
+                  type: "string",
+                  description: "The reminder message",
+                },
+                duration: {
+                  type: "string",
+                  description:
+                    "Duration in format: 1d, 2h, 30m (d=days, h=hours, m=minutes)",
+                  pattern: "^\\d+[dhm]$",
+                },
+              },
+              required: ["message", "duration"],
+            },
+          },
+        },
         {
           type: "function",
           function: {
@@ -147,7 +182,10 @@ export async function chat(
         res.tool_calls.map(async (toolCall) => {
           if (toolCall.function.name === "web_search") {
             const args = JSON.parse(toolCall.function.arguments);
-            const searchResults = await webSearch(args.query, args.country || "US");
+            const searchResults = await webSearch(
+              args.query,
+              args.country || "US"
+            );
             return {
               tool_call_id: toolCall.id,
               role: "tool" as const,
@@ -163,6 +201,20 @@ export async function chat(
               name: toolCall.function.name,
               content: "Table image generated successfully",
             };
+          } else if (toolCall.function.name === "set_reminder") {
+            const args = JSON.parse(toolCall.function.arguments);
+            const reminderManager = ReminderManager.getInstance();
+            await reminderManager.addReminder(
+              phoneNumber,
+              args.message,
+              args.duration
+            );
+            return {
+              tool_call_id: toolCall.id,
+              role: "tool" as const,
+              name: toolCall.function.name,
+              content: "Reminder set successfully",
+            };
           }
           throw new Error(`Unknown tool: ${toolCall.function.name}`);
         })
@@ -177,6 +229,7 @@ export async function chat(
           },
           ...toolResults,
         ],
+        phoneNumber,
         imageBuffer
       );
     }
@@ -185,9 +238,10 @@ export async function chat(
 
     // Validate that we have a non-empty response
     if (!fullAnswer.trim()) {
-      return { 
-        answer: "I apologize, but I couldn't generate a proper response. Could you please rephrase your message or try again?", 
-        imageBuffer 
+      return {
+        answer:
+          "I apologize, but I couldn't generate a proper response. Could you please rephrase your message or try again?",
+        imageBuffer,
       };
     }
 
@@ -215,9 +269,10 @@ export async function chat(
 
     // Validate fallback response as well
     if (!fullAnswer.trim()) {
-      return { 
-        answer: "I encountered an error and couldn't generate a proper response. Please try again in a moment.", 
-        imageBuffer 
+      return {
+        answer:
+          "I encountered an error and couldn't generate a proper response. Please try again in a moment.",
+        imageBuffer,
       };
     }
 
@@ -227,10 +282,13 @@ export async function chat(
 
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   const cacheManager = CacheManager.getInstance();
-  const bufferKey = crypto.createHash('sha256').update(audioBuffer).digest('hex');
-  
+  const bufferKey = crypto
+    .createHash("sha256")
+    .update(audioBuffer)
+    .digest("hex");
+
   // Check cache first
-  const cachedTranscription = cacheManager.get(bufferKey, 'transcription');
+  const cachedTranscription = cacheManager.get(bufferKey, "transcription");
   if (cachedTranscription) {
     return cachedTranscription;
   }
@@ -243,23 +301,23 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   });
 
   // Save to cache
-  cacheManager.set(bufferKey, response.text, 'transcription');
-  
+  cacheManager.set(bufferKey, response.text, "transcription");
+
   return response.text;
 }
 
 export async function vision(imageUrl: string): Promise<string> {
   const cacheManager = CacheManager.getInstance();
-  
+
   // Check cache first
-  const cachedResult = cacheManager.get(imageUrl, 'image');
+  const cachedResult = cacheManager.get(imageUrl, "image");
   if (cachedResult) {
     return cachedResult;
   }
 
   // If not in cache, perform vision analysis
   const [descriptionResponse, ocrResponse] = await Promise.all([
-    // Get image description using Llama
+    // Get detailed image description using Llama
     groq.chat.completions.create({
       model: "llama-3.2-90b-vision-preview",
       messages: [
@@ -268,7 +326,7 @@ export async function vision(imageUrl: string): Promise<string> {
           content: [
             {
               type: "text",
-              text: "Please describe this image in a few words. Be concise and clear.",
+              text: "Describe this image in detail, including any important visual elements, text, or notable features.",
             },
             {
               type: "image_url",
@@ -281,29 +339,34 @@ export async function vision(imageUrl: string): Promise<string> {
       ],
     }),
     // Get OCR text using OCR.space with multi-language support
-    fetch('https://api.ocr.space/parse/image', {
-      method: 'POST',
+    fetch("https://api.ocr.space/parse/image", {
+      method: "POST",
       headers: {
-        'apikey': process.env.OCR_SPACE_API_KEY || '',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        apikey: process.env.OCR_SPACE_API_KEY || "",
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
         url: imageUrl,
-        detectOrientation: 'true',
-        scale: 'true',
-        OCREngine: '2',
-        isTable: 'true',
-        language: 'auto' // This enables multi-language detection
-      })
-    }).then(res => res.json())
+        detectOrientation: "true",
+        scale: "true",
+        OCREngine: "2",
+        isTable: "true",
+        language: "auto",
+      }),
+    }).then((res) => res.json()),
   ]);
 
-  const description = descriptionResponse.choices[0]?.message?.content || "No description available";
-  const ocrText = ocrResponse?.ParsedResults?.[0]?.ParsedText?.trim() || "No text found";
-  const result = `Image Description: ${description}\n${ocrText ? `Text found in image: ${ocrText}` : ''}`;
-  
+  const description = descriptionResponse.choices[0]?.message?.content || "";
+  const ocrText = ocrResponse?.ParsedResults?.[0]?.ParsedText?.trim() || "";
+
+  // Combine results in a more natural way
+  let result = description;
+  if (ocrText) {
+    result += (result ? "\n\n" : "") + ocrText;
+  }
+
   // Save to cache
-  cacheManager.set(imageUrl, result, 'image');
-  
+  cacheManager.set(imageUrl, result, "image");
+
   return result;
 }
