@@ -181,7 +181,7 @@ client.on("message", async (message) => {
 
       // Limit total message history size to prevent token overflow
 
-      for (const msg of history.reverse()) {
+      for (const msg of history) {
         // Process messages from oldest to newest
         if (msg.body.startsWith("/clear")) {
           messages = []; // Keep system message, clear the rest
