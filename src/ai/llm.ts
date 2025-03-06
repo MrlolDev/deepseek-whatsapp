@@ -238,6 +238,7 @@ export async function chat(
 
     // Validate that we have a non-empty response
     if (!fullAnswer.trim()) {
+      console.log(res);
       return {
         answer:
           "I apologize, but I couldn't generate a proper response. Could you please rephrase your message or try again?",
