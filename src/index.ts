@@ -241,7 +241,6 @@ client.on("message", async (message) => {
           continue;
         }
       }
-      console.log(messages);
 
       // Get AI response
       const response = await chat(messages, senderNumber);
