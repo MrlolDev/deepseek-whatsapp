@@ -76,7 +76,7 @@ export async function chat(
 ): Promise<{ answer: string; thinking?: string; imageBuffer?: Buffer | null }> {
   try {
     const response = await groq.chat.completions.create({
-      model: "qwen-qwq-32b",
+      model: "deepseek-r1-distill-llama-70b-specdec",
       messages: [
         {
           role: "system",
