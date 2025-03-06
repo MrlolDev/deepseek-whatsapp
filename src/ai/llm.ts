@@ -84,7 +84,7 @@ export async function chat(
         },
         ...messages,
       ],
-      max_tokens: 2048,
+      max_tokens: 4096,
       tool_choice: "auto",
       tools: [
         {
