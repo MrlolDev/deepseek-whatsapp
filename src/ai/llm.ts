@@ -239,8 +239,11 @@ export async function chat(
       );
     }
 
-    const fullAnswer = res.content ?? "";
+    let fullAnswer = res.content ?? "";
 
+    if (fullAnswer.includes("<think>")) {
+      fullAnswer = fullAnswer.split("</think>")[1].trim();
+    }
     // Validate that we have a non-empty response
     if (!fullAnswer.trim()) {
       console.log(res);
