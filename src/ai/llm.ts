@@ -11,6 +11,11 @@ const groq = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
 });
 
+const crof = new OpenAI({
+  apiKey: process.env.CROF_API_KEY,
+  baseURL: "https://ai.nahcrof.com/v2",
+});
+
 const sysPrompt =
   `You are a WhatsApp AI assistant powered by DeepSeek R1, a state-of-the-art AI model created by DeepSeek AI Lab. You should be warm, friendly, and conversational in your responses - like chatting with a helpful friend. This WhatsApp integration was developed by Leo (email: leo@turing.sh, website: mrlol.dev). Today's date is ${new Date().toLocaleDateString()}.\n\n` +
   "About DeepSeek R1:\n" +
@@ -75,7 +80,7 @@ export async function chat(
   imageBuffer: Buffer | null = null
 ): Promise<{ answer: string; thinking?: string; imageBuffer?: Buffer | null }> {
   try {
-    const response = await groq.chat.completions.create({
+    const response = await crof.chat.completions.create({
       model: "qwen-qwq-32b",
       messages: [
         {
@@ -84,7 +89,7 @@ export async function chat(
         },
         ...messages,
       ],
-      max_tokens: 4096,
+      max_tokens: 8000,
       tool_choice: "auto",
       tools: [
         {
@@ -249,9 +254,9 @@ export async function chat(
     return { answer: fullAnswer, imageBuffer };
   } catch (error) {
     const models = [
-      "llama-3.3-70b-versatile",
-      "llama-3.3-70b-specdec",
-      "llama-3.2-90b-vision-preview",
+      "deepseek-r1",
+      "deepseek-r1-distill-llama-70b",
+      "llama3.1-405b-instruct",
     ];
     const randomModel = models[Math.floor(Math.random() * models.length)];
     // If we hit rate limit, retry with llama-3.2-90b-vision-preview
