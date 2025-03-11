@@ -89,7 +89,7 @@ export async function chat(
         },
         ...messages,
       ],
-      max_tokens: 8000,
+      max_tokens: 16000,
       tool_choice: "auto",
       tools: [
         {
@@ -272,7 +272,7 @@ export async function chat(
         },
         ...messages,
       ],
-      max_tokens: 1024,
+      max_tokens: 16000,
     });
     const fullAnswer = fallbackResponse.choices[0].message.content ?? "";
 
