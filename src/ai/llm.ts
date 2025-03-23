@@ -81,7 +81,7 @@ export async function chat(
 ): Promise<{ answer: string; thinking?: string; imageBuffer?: Buffer | null }> {
   try {
     const response = await crof.chat.completions.create({
-      model: "qwen-qwq-32b",
+      model: "deepseek-r1",
       messages: [
         {
           role: "system",
@@ -257,9 +257,9 @@ export async function chat(
     return { answer: fullAnswer, imageBuffer };
   } catch (error) {
     const models = [
-      "deepseek-r1",
       "deepseek-r1-distill-llama-70b",
-      "llama3.1-405b-instruct",
+      "deepseek-r1-distill-qwen-32b",
+      "gemma-3-27b-it",
     ];
     const randomModel = models[Math.floor(Math.random() * models.length)];
     // If we hit rate limit, retry with llama-3.2-90b-vision-preview
@@ -274,13 +274,15 @@ export async function chat(
       ],
       max_tokens: 16000,
     });
-    const fullAnswer = fallbackResponse.choices[0].message.content ?? "";
-
+    let fullAnswer = fallbackResponse.choices[0].message.content ?? "";
+    if (fullAnswer.includes("<think>")) {
+      fullAnswer = fullAnswer.split("</think>")[1].trim();
+    }
     // Validate fallback response as well
     if (!fullAnswer.trim()) {
       return {
         answer:
-          "I encountered an error and couldn't generate a proper response. Please try again in a moment.",
+          "I apologize, but I couldn't generate a proper response. Could you please rephrase your message or try again?",
         imageBuffer,
       };
     }
