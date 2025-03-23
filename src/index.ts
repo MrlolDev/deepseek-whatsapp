@@ -269,7 +269,8 @@ client.on("message", async (message) => {
       try {
         const wChat = await message.getChat();
         await wChat.clearMessages();
-        if (history.length <= 0) {
+        const lastMessage = wChat.lastMessage;
+        if (lastMessage) {
           return;
         }
         // Try reply first, fallback to direct message
