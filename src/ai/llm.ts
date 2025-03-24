@@ -259,11 +259,10 @@ export async function chat(
     const models = [
       "deepseek-r1-distill-llama-70b",
       "deepseek-r1-distill-qwen-32b",
-      "gemma-3-27b-it",
     ];
     const randomModel = models[Math.floor(Math.random() * models.length)];
     // If we hit rate limit, retry with llama-3.2-90b-vision-preview
-    const fallbackResponse = await crof.chat.completions.create({
+    const fallbackResponse = await groq.chat.completions.create({
       model: randomModel,
       messages: [
         {
