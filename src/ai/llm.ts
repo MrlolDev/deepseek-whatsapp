@@ -274,7 +274,6 @@ export async function chat(
       max_tokens: 16000,
     });
     let fullAnswer = fallbackResponse.choices[0].message.content ?? "";
-    console.log(fullAnswer);
     if (fullAnswer.includes("<think>")) {
       fullAnswer = fullAnswer.split("</think>")[1].trim();
     }
