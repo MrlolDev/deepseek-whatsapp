@@ -262,7 +262,7 @@ export async function chat(
     ];
     const randomModel = models[Math.floor(Math.random() * models.length)];
     // If we hit rate limit, retry with llama-3.2-90b-vision-preview
-    const fallbackResponse = await groq.chat.completions.create({
+    const fallbackResponse = await crof.chat.completions.create({
       model: randomModel,
       messages: [
         {
