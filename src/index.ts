@@ -1,4 +1,7 @@
-import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+import type {
+  ChatCompletionContentPart,
+  ChatCompletionMessageParam,
+} from "openai/resources/index.mjs";
 import { chat, transcribeAudio, vision } from "./ai/llm.js";
 import whatsapp from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
@@ -188,7 +191,7 @@ client.on("message", async (message) => {
           continue;
         }
 
-        let messageContent = "";
+        let messageContent: ChatCompletionContentPart[] = [];
 
         try {
           if (msg.hasMedia) {
@@ -196,14 +199,22 @@ client.on("message", async (message) => {
 
             // Handle different media types
             if (msg.type === "ptt" || msg.type === "audio") {
-              messageContent = await transcribeAudio(
-                Buffer.from(media.data, "base64")
-              );
+              messageContent = [
+                {
+                  type: "text",
+                  text: await transcribeAudio(
+                    Buffer.from(media.data, "base64")
+                  ),
+                },
+              ];
             } else if (msg.type === "sticker") {
               const stickerDescription = await vision(media.data);
-              messageContent = msg.body
-                ? `[Sticker: ${stickerDescription}] ${msg.body}`
-                : `[Sticker: ${stickerDescription}]`;
+              messageContent.push({
+                type: "image_url",
+                image_url: {
+                  url: `data:${media.mimetype};base64,${media.data}`,
+                },
+              } as ChatCompletionContentPart);
             } else if (
               msg.type === "document" &&
               media.mimetype === "application/pdf"
@@ -211,30 +222,43 @@ client.on("message", async (message) => {
               const pdfData = await extractTextFromPDF(
                 Buffer.from(media.data, "base64")
               );
-              messageContent = msg.body
-                ? `[PDF: ${pdfData}] ${msg.body}`
-                : `[PDF: ${pdfData}]`;
+              messageContent.push({
+                type: "text",
+                text: msg.body
+                  ? `[PDF: ${pdfData}] ${msg.body}`
+                  : `[PDF: ${pdfData}]`,
+              });
             } else if (msg.type === "image") {
               const dataUrl = `data:${media.mimetype};base64,${media.data}`;
-              const imageDescription = await vision(dataUrl);
-              messageContent = msg.body
-                ? `[Image: ${imageDescription}] ${msg.body}`
-                : `[Image: ${imageDescription}]`;
+              messageContent.push({
+                type: "image_url",
+                image_url: {
+                  url: dataUrl,
+                },
+              } as ChatCompletionContentPart);
             }
           } else {
-            messageContent = msg.body;
+            messageContent = [
+              {
+                type: "text",
+                text: msg.body,
+              },
+            ];
           }
 
           // Add group context if needed
           if (isGroup && !msg.fromMe) {
-            messageContent = `[${msg.author}] ${messageContent}`;
+            messageContent.unshift({
+              type: "text",
+              text: `[${msg.author}]`,
+            });
           }
 
           // Add the message to history
           messages.push({
             role: msg.fromMe ? "assistant" : "user",
             content: messageContent,
-          });
+          } as ChatCompletionMessageParam);
         } catch (error) {
           console.warn("Error processing message in history:", error);
           // Continue with next message if one fails
