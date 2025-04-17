@@ -255,10 +255,17 @@ client.on("message", async (message) => {
           }
 
           // Add the message to history
-          messages.push({
-            role: msg.fromMe ? "assistant" : "user",
-            content: messageContent,
-          } as ChatCompletionMessageParam);
+          if (msg.fromMe) {
+            messages.push({
+              role: "assistant",
+              content: msg.body,
+            } as ChatCompletionMessageParam);
+          } else {
+            messages.push({
+              role: "user",
+              content: messageContent,
+            } as ChatCompletionMessageParam);
+          }
         } catch (error) {
           console.warn("Error processing message in history:", error);
           // Continue with next message if one fails
