@@ -191,7 +191,7 @@ client.on("message", async (message) => {
           continue;
         }
 
-        let messageContent: ChatCompletionContentPart[] = [];
+        let messageContent = "";
 
         try {
           if (msg.hasMedia) {
@@ -199,22 +199,14 @@ client.on("message", async (message) => {
 
             // Handle different media types
             if (msg.type === "ptt" || msg.type === "audio") {
-              messageContent = [
-                {
-                  type: "text",
-                  text: await transcribeAudio(
-                    Buffer.from(media.data, "base64")
-                  ),
-                },
-              ];
+              messageContent = await transcribeAudio(
+                Buffer.from(media.data, "base64")
+              );
             } else if (msg.type === "sticker") {
               const stickerDescription = await vision(media.data);
-              messageContent.push({
-                type: "image_url",
-                image_url: {
-                  url: `data:${media.mimetype};base64,${media.data}`,
-                },
-              } as ChatCompletionContentPart);
+              messageContent = msg.body
+                ? `[Sticker: ${stickerDescription}] ${msg.body}`
+                : `[Sticker: ${stickerDescription}]`;
             } else if (
               msg.type === "document" &&
               media.mimetype === "application/pdf"
@@ -222,50 +214,30 @@ client.on("message", async (message) => {
               const pdfData = await extractTextFromPDF(
                 Buffer.from(media.data, "base64")
               );
-              messageContent.push({
-                type: "text",
-                text: msg.body
-                  ? `[PDF: ${pdfData}] ${msg.body}`
-                  : `[PDF: ${pdfData}]`,
-              });
+              messageContent = msg.body
+                ? `[PDF: ${pdfData}] ${msg.body}`
+                : `[PDF: ${pdfData}]`;
             } else if (msg.type === "image") {
               const dataUrl = `data:${media.mimetype};base64,${media.data}`;
-              messageContent.push({
-                type: "image_url",
-                image_url: {
-                  url: dataUrl,
-                },
-              } as ChatCompletionContentPart);
+              const imageDescription = await vision(dataUrl);
+              messageContent = msg.body
+                ? `[Image: ${imageDescription}] ${msg.body}`
+                : `[Image: ${imageDescription}]`;
             }
           } else {
-            messageContent = [
-              {
-                type: "text",
-                text: msg.body,
-              },
-            ];
+            messageContent = msg.body;
           }
 
           // Add group context if needed
           if (isGroup && !msg.fromMe) {
-            messageContent.unshift({
-              type: "text",
-              text: `[${msg.author}]`,
-            });
+            messageContent = `[${msg.author}] ${messageContent}`;
           }
 
           // Add the message to history
-          if (msg.fromMe) {
-            messages.push({
-              role: "assistant",
-              content: msg.body,
-            } as ChatCompletionMessageParam);
-          } else {
-            messages.push({
-              role: "user",
-              content: messageContent,
-            } as ChatCompletionMessageParam);
-          }
+          messages.push({
+            role: msg.fromMe ? "assistant" : "user",
+            content: messageContent,
+          });
         } catch (error) {
           console.warn("Error processing message in history:", error);
           // Continue with next message if one fails

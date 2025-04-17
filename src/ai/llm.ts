@@ -85,8 +85,8 @@ export async function chat(
   imageBuffer: Buffer | null = null
 ): Promise<{ answer: string; thinking?: string; imageBuffer?: Buffer | null }> {
   try {
-    const response = await openrouter.chat.completions.create({
-      model: "google/gemini-2.5-pro-exp-03-25:free",
+    const response = await crof.chat.completions.create({
+      model: "deepseek-r1-distill-llama-70b",
       messages: [
         {
           role: "system",
@@ -95,6 +95,92 @@ export async function chat(
         ...messages,
       ],
       max_tokens: 16000,
+      tool_choice: "auto",
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "web_search",
+            description:
+              "Search the web for information. You can provide multiple queries to get more comprehensive results. Say always the sources where you got the information.",
+            parameters: {
+              type: "object",
+              properties: {
+                query: {
+                  type: "string",
+                  description:
+                    "The search query to perform. Try to make it exact and concise.",
+                },
+                country: {
+                  type: "string",
+                  description: "The country to search in.",
+                  default: "US",
+                },
+              },
+              required: ["queries"],
+            },
+          },
+        },
+        /*
+        {
+          type: "function",
+          function: {
+            name: "set_reminder",
+            description:
+              "Set a reminder for the user. Only use when explicitly requested. Duration format: 1d (1 day), 2h (2 hours), 30m (30 minutes)",
+            parameters: {
+              type: "object",
+              properties: {
+                message: {
+                  type: "string",
+                  description: "The reminder message",
+                },
+                duration: {
+                  type: "string",
+                  description:
+                    "Duration in format: 1d, 2h, 30m (d=days, h=hours, m=minutes)",
+                  pattern: "^\\d+[dhm]$",
+                },
+              },
+              required: ["message", "duration"],
+            },
+          },
+        },
+        {
+          type: "function",
+          function: {
+            name: "create_table",
+            description:
+              "Create a table image from structured data. This will automatically attach the table to your text reply.",
+            parameters: {
+              type: "object",
+              properties: {
+                headers: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Array of column headers",
+                },
+                rows: {
+                  type: "array",
+                  items: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      description: "Cell content (will be converted to string)",
+                    },
+                  },
+                  description: "Array of rows, each containing cell values",
+                },
+                title: {
+                  type: "string",
+                  description: "Optional table title",
+                },
+              },
+              required: ["headers", "rows"],
+            },
+          },
+        },*/
+      ],
     });
 
     const res = response.choices[0].message;
