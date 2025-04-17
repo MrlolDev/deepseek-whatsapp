@@ -16,6 +16,11 @@ const crof = new OpenAI({
   baseURL: "https://ai.nahcrof.com/v2",
 });
 
+const openrouter = new OpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
+});
+
 const sysPrompt =
   `You are a WhatsApp AI assistant powered by DeepSeek R1, a state-of-the-art AI model created by DeepSeek AI Lab. You should be warm, friendly, and conversational in your responses - like chatting with a helpful friend. This WhatsApp integration was developed by Leo (email: leo@turing.sh, website: mrlol.dev). Today's date is ${new Date().toLocaleDateString()}.\n\n` +
   "About DeepSeek R1:\n" +
@@ -80,8 +85,8 @@ export async function chat(
   imageBuffer: Buffer | null = null
 ): Promise<{ answer: string; thinking?: string; imageBuffer?: Buffer | null }> {
   try {
-    const response = await crof.chat.completions.create({
-      model: "deepseek-r1-distill-llama-70b",
+    const response = await openrouter.chat.completions.create({
+      model: "google/gemini-2.5-pro-exp-03-25:free",
       messages: [
         {
           role: "system",
