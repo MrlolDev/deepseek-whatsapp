@@ -86,7 +86,7 @@ export async function chat(
 ): Promise<{ answer: string; thinking?: string; imageBuffer?: Buffer | null }> {
   try {
     const response = await crof.chat.completions.create({
-      model: "deepseek-r1-distill-llama-70b",
+      model: "deepseek-r1-0528",
       messages: [
         {
           role: "system",
